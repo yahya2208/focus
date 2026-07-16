@@ -1,0 +1,11 @@
+# FOCUS v2 Code Owners
+# Default owner for everything
+* @yahya2208
+
+# Scientific core requires careful review
+/src/core/scientific/ @yahya2208
+/src/core/calibration/ @yahya2208
+/src/core/engine/ @yahya2208
+
+# Documentation
+/docs/ @yahya2208
