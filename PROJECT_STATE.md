@@ -10,7 +10,7 @@
 |---|---|---|
 | Phase -1: Engineering Governance | ✅ Complete | `v2.0-phase-minus1` |
 | Phase -0.5: Architecture Bible Lock | ✅ Complete | `v2.0-phase-minus0.5` |
-| Phase 0: Architecture Foundation | ⏳ Pending | — |
+| Phase 0: Architecture Foundation | ✅ Complete | `v2.0-phase-0` |
 | Phase 1: Design System | ⏳ Pending | — |
 | Phase 2: Scientific Core | ⏳ Pending | — |
 | Phase 3: Plugin Architecture + Game01 | ⏳ Pending | — |
