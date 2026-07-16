@@ -12,7 +12,7 @@
 | Phase -0.5: Architecture Bible Lock | ✅ Complete | `v2.0-phase-minus0.5` |
 | Phase 0: Architecture Foundation | ✅ Complete | `v2.0-phase-0` |
 | Phase 1: Design System | ✅ Complete | `v2.0-phase-1` |
-| Phase 2: Scientific Core | ⏳ Pending | — |
+| Phase 2: Scientific Core | ✅ Complete | `v2.0-phase-2` |
 | Phase 3: Plugin Architecture + Game01 | ⏳ Pending | — |
 | Phase 3.5: Alpha Review (M1) | ⏳ Pending | — |
 | Phase 4: Anti-Cheat Engine | ⏳ Pending | — |

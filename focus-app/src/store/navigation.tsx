@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 import type { CalibrationProfile } from '../core/calibration';
+import type { ScoringResult } from '../core/engine/scoring';
 
 export type ScreenName =
   | 'home'
@@ -13,37 +14,71 @@ export type ScreenName =
   | 'settings'
   | 'about';
 
+export interface SessionRecord {
+  readonly id: string;
+  readonly gameMode: string;
+  readonly timestamp: number;
+  readonly rawRts: readonly number[];
+  readonly correctedRts: readonly number[];
+  readonly score: ScoringResult | null;
+}
+
 export interface AppState {
   screen: ScreenName;
+  currentScreen: ScreenName;
   selectedGame: string | null;
   calibrationProfile: CalibrationProfile | null;
   sessionResults: unknown | null;
+  results: {
+    rawRts: readonly number[];
+    correctedRts: readonly number[];
+    calibration: CalibrationProfile;
+    totalRounds: number;
+    validRounds: number;
+  } | null;
+  sessions: SessionRecord[];
 }
 
 type NavigationAction =
   | { type: 'NAVIGATE'; screen: ScreenName }
   | { type: 'SELECT_GAME'; gameMode: string }
   | { type: 'SET_CALIBRATION'; profile: CalibrationProfile }
-  | { type: 'SET_RESULTS'; results: unknown }
+  | { type: 'SET_RESULTS'; results: AppState['results'] }
+  | { type: 'SAVE_SESSION' }
   | { type: 'RESET' };
 
 const initialState: AppState = {
   screen: 'home',
+  currentScreen: 'home',
   selectedGame: null,
   calibrationProfile: null,
   sessionResults: null,
+  results: null,
+  sessions: [],
 };
 
 function navigationReducer(state: AppState, action: NavigationAction): AppState {
   switch (action.type) {
     case 'NAVIGATE':
-      return { ...state, screen: action.screen };
+      return { ...state, screen: action.screen, currentScreen: action.screen };
     case 'SELECT_GAME':
       return { ...state, selectedGame: action.gameMode };
     case 'SET_CALIBRATION':
       return { ...state, calibrationProfile: action.profile };
     case 'SET_RESULTS':
-      return { ...state, sessionResults: action.results };
+      return { ...state, results: action.results };
+    case 'SAVE_SESSION': {
+      if (!state.results) return state;
+      const session: SessionRecord = {
+        id: `session-${Date.now()}`,
+        gameMode: state.selectedGame ?? 'reaction-light',
+        timestamp: Date.now(),
+        rawRts: state.results.rawRts,
+        correctedRts: state.results.correctedRts,
+        score: null,
+      };
+      return { ...state, sessions: [...state.sessions, session] };
+    }
     case 'RESET':
       return initialState;
     default:
