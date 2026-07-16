@@ -1,42 +1,41 @@
 # ENGINEERING BACKLOG — FOCUS v2.0
 
 ## Current Phase
-Phase -0.5: Architecture Bible Lock
+Phase 3.5: Alpha Review (M1) ✅ IN PROGRESS
 
-## Next Phase
-Phase 0: Architecture Foundation
+## Completed Phases
+- [x] Phase -1: Engineering Governance (v2.0-phase-minus1)
+- [x] Phase -0.5: Architecture Bible Lock (v2.0-phase-minus0.5)
+- [x] Phase 0: Architecture Foundation (v2.0-phase-0)
+- [x] Phase 1: Design System (v2.0-phase-1)
+- [x] Phase 2: Scientific Core (v2.0-phase-2)
+- [x] Phase 3: Plugin Architecture + Game01 (v2.0-phase-3)
 
 ## Blockers
-- None
+- GitHub remote not configured for focus-v2 repo
+- No GitHub token available for releases
 
-## Phase -0.5 Remaining
-- [ ] CONSTITUTION.md
-- [ ] COGNITIVE_BIBLE.md
-- [ ] FOLDER_STRUCTURE.md
-- [ ] TERMINOLOGY.md
-- [ ] NAMING_CONVENTION.md
-- [ ] CODING_STANDARDS.md
-- [ ] DOD.md
-- [ ] RELEASE_POLICY.md
+## Known Issues (Alpha)
+- No persistence layer beyond localStorage (repository exists but sessions not persisted automatically)
+- Single game mode (Reaction Light Test only)
+- No PWA/service worker
+- No i18n implementation (settings exist, strings hardcoded English)
+- No E2E tests
+- GameScreen manages its own timing separately from plugin (plugin is synchronous state machine)
+- ThemeProvider needs `window.matchMedia` mock in tests
 
-## Phase 0 Pending
-- [ ] Scientific Constants (centralized)
-- [ ] Store navigation (AppState, Screen types, AppProvider)
-- [ ] Calibration types + factory
-- [ ] Measurement types
-- [ ] Engine types (Reaction, Consistency, Fatigue, Scoring)
-- [ ] Repository interface + memory repo
-- [ ] Settings store
-- [ ] ErrorBoundary
-- [ ] Barrel exports
+## Technical Debt
+- GameScreen duplicate timing logic (could delegate to plugin timer)
+- SettingsScreen hardcoded language options ('tr', 'ar' not implemented)
+- useSettings renamed to .tsx but original .ts deleted (git tracks cleanly)
+
+## Next Phase
+Phase 4: Data Persistence + Session Management
 
 ## Nice-to-Have
 - AGENTS.md for AI-assisted development
 - Performance budgets in CI
 - Coverage thresholds in vitest
-
-## Technical Debt
-- None yet
 
 ## Scientific Validation Tasks
 - Phase 7.5: Compare Focus Score with real alpha/beta data
