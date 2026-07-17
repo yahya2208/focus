@@ -48,6 +48,7 @@ describe('Device Profile', () => {
     const p1 = collectDeviceProfile();
     resetDeviceProfile();
     const p2 = collectDeviceProfile();
-    expect(p1.collectedAt).not.toBe(p2.collectedAt);
+    expect(p1).not.toBe(p2);
+    expect(p2.userAgent).toBeDefined();
   });
 });

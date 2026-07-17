@@ -3,7 +3,7 @@
 *Single Source of Truth. Read before any implementation.*
 
 ## Current Version
-**v0.1.0-alpha** — Supabase Platform
+**v0.1.0-alpha** — QR Experience & Viral Acquisition
 
 ## Progress
 | Phase | Status | Tag |
@@ -17,7 +17,7 @@
 | Phase 3.5: Alpha Review (M1) | ✅ Complete | `v2.0-m1-alpha` |
 | Phase 4: Persistent Platform Core | ✅ Complete | `v2.0-phase4` |
 | Phase 5: Supabase Platform | ✅ Complete | `v2.0-phase5` |
-| Phase 6: QR Experience | ⏳ Pending | — |
+| Phase 6: QR Experience & Viral Acquisition | ✅ Complete | `v2.0-phase6` |
 | Phase 7: Research Console (M2) | ⏳ Pending | — |
 | Phase 7.5: Scientific Validation | ⏳ Pending | — |
 | Phase 8: AI Coach | ⏳ Pending | — |
@@ -37,33 +37,35 @@
 | M5 — Release | v1.0 | ⏳ |
 
 ## Test Coverage
-- **126 tests** across 19 test files
+- **215 tests** across 25 test files
 - Phase 2 Core: 29 (reaction, consistency, fatigue, scoring, measurement, repository, infrastructure)
 - Phase 3: 8 (plugin 6 + app 2)
 - Phase 4: 49 (session 10, device 5, events 10, calibration-cache 8, session-repository 10, history 6)
 - Phase 5: 40 (auth 10, offline 19, telemetry 9, supabase-client 2)
+- Phase 6: 89 (qr-generate 14, campaign 22, share 12, deeplink 12, referral 19, consent 11, device fix 1)
 
-## Architecture Summary (Phase 5)
-- **10 screens**: Home, Library, Intro, Calibration, Countdown, Game, Results, History, Settings, About
+## Architecture Summary (Phase 6)
+- **13 screens**: Home, Library, Intro, Calibration, Countdown, Game, Results, History, Settings, About, Landing, Share, Register
 - **1 plugin**: Reaction Light Test
 - **5 scientific engines**: Reaction, Consistency, Fatigue, Scoring, Measurement Pipeline
-- **3 stores**: Navigation, Settings, Theme
-- **9 core modules**: Session Lifecycle, Device Profile, Calibration Cache, Repository, History Service, Event Bus, Auth, Offline Queue, Telemetry
-- **3 Supabase modules**: Client, Auth, Session Repository
-- **2 repository implementations**: Memory (tests), LocalStorage (production), Supabase (production)
-- **Database schema**: 5 tables with RLS policies (users, sessions, devices, calibrations, surveys)
-- **ADR-008**: Repository Abstraction (dependency inversion for all storage)
+- **10 core modules**: Session, Device, Calibration Cache, Repository, History, Event Bus, Auth, Offline, Telemetry, QR/Campaign/Referral/Consent
+- **27 telemetry event types** covering full user journey
+- **6 share platforms**: WhatsApp, Telegram, X, Facebook, Email, Copy
+- **9 campaign tracking dimensions**: campaign, location, school, company, event, version, language, source, referrer
+- **Referral engine** with unique codes, scan tracking, conversion rates
+- **Database schema**: 5 tables with RLS (users, sessions, devices, calibrations, surveys)
+- **ADR-008**: Repository Abstraction
 
 ## Last Commit
 - **Hash:** pending
-- **Message:** `feat(phase-5): supabase platform`
+- **Message:** `feat(phase-6): qr experience & viral acquisition engine`
 - **Date:** 2026-07-17
 
 ## Last Tag
-- `v2.0-phase5`
+- `v2.0-phase6`
 
 ## Last Snapshot
-- `focus-v2-phase5-snapshot-2026-07-17.tar.gz`
+- `focus-v2-phase6-snapshot-2026-07-17.tar.gz`
 
 ## Open Risks
 - GitHub remote not configured
@@ -71,4 +73,4 @@
 - System memory constraints affect build times
 
 ## Next Decision
-Proceed to Phase 6: QR Experience.
+Proceed to Phase 7: Research Console (M2).

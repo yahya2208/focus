@@ -12,6 +12,9 @@ import { ResultsScreen } from './screens/results/ResultsScreen';
 import { HistoryScreen } from './screens/history/HistoryScreen';
 import { SettingsScreen } from './screens/settings/SettingsScreen';
 import { AboutScreen } from './screens/about/AboutScreen';
+import { LandingScreen } from './screens/landing/LandingScreen';
+import { ShareScreen } from './screens/share/ShareScreen';
+import { RegisterScreen } from './screens/register/RegisterScreen';
 import type { ScreenName } from './store/navigation';
 
 const screens: Record<ScreenName, React.FC> = {
@@ -25,6 +28,9 @@ const screens: Record<ScreenName, React.FC> = {
   history: HistoryScreen,
   settings: SettingsScreen,
   about: AboutScreen,
+  landing: LandingScreen,
+  share: ShareScreen,
+  register: RegisterScreen,
 };
 
 function ScreenRouter() {

@@ -82,6 +82,12 @@ export function ResultsScreen() {
       </Card>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <Button onClick={saveAndExit}>Save & Exit</Button>
+        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'share' })}>
+          Challenge a Friend
+        </Button>
+        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'register' })}>
+          Register
+        </Button>
         <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'home' })}>
           Discard
         </Button>

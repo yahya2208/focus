@@ -13,7 +13,17 @@ export type TelemetryEventType =
   | 'auth_converted'
   | 'settings_changed'
   | 'qr_scanned'
-  | 'error_occurred';
+  | 'error_occurred'
+  | 'landing_loaded'
+  | 'registration_prompt'
+  | 'registration_completed'
+  | 'guest_converted'
+  | 'share_clicked'
+  | 'qr_generated'
+  | 'campaign_detected'
+  | 'referral_clicked'
+  | 'consent_granted'
+  | 'consent_withdrawn';
 
 export interface TelemetryEvent {
   readonly type: TelemetryEventType;
