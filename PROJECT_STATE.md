@@ -3,7 +3,7 @@
 *Single Source of Truth. Read before any implementation.*
 
 ## Current Version
-**v0.1.0-alpha** — Playable Alpha (M1)
+**v0.1.0-alpha** — Persistent Platform Core
 
 ## Progress
 | Phase | Status | Tag |
@@ -15,7 +15,7 @@
 | Phase 2: Scientific Core | ✅ Complete | `v2.0-phase-2` |
 | Phase 3: Plugin Architecture + Game01 | ✅ Complete | `v2.0-phase-3` |
 | Phase 3.5: Alpha Review (M1) | ✅ Complete | `v2.0-m1-alpha` |
-| Phase 4: Data Persistence + Session Management | ⏳ Pending | — |
+| Phase 4: Persistent Platform Core | ✅ Complete | `v2.0-phase4` |
 | Phase 5: Supabase + Offline Sync | ⏳ Pending | — |
 | Phase 6: QR Experience | ⏳ Pending | — |
 | Phase 7: Research Console (M2) | ⏳ Pending | — |
@@ -37,36 +37,35 @@
 | M5 — Release | v1.0 | ⏳ |
 
 ## Test Coverage
-- **37 tests** across 9 test files
-- Core engines: reaction (6), consistency (6), fatigue (4), scoring (4)
-- Measurement pipeline: 3
-- Repository: 4
-- Plugin: 6
-- App render: 2
-- Infrastructure: 2
+- **86 tests** across 15 test files
+- Phase 2 Core: 29 (reaction, consistency, fatigue, scoring, measurement, repository, infrastructure)
+- Phase 3: 8 (plugin 6 + app 2)
+- Phase 4: 49 (session 10, device 5, events 10, calibration-cache 8, session-repository 10, history 6)
 
-## Architecture Summary
+## Architecture Summary (Phase 4)
 - **10 screens**: Home, Library, Intro, Calibration, Countdown, Game, Results, History, Settings, About
-- **1 plugin**: Reaction Light Test (synchronous state machine)
-- **5 engines**: Reaction, Consistency, Fatigue, Scoring, Measurement Pipeline
-- **3 stores**: Navigation (AppState), Settings (localStorage), Theme (context)
-- **Shared components**: Button, Card, ProgressRing, ErrorBoundary
+- **1 plugin**: Reaction Light Test
+- **5 scientific engines**: Reaction, Consistency, Fatigue, Scoring, Measurement Pipeline
+- **3 stores**: Navigation, Settings, Theme
+- **6 new modules**: Session Lifecycle, Device Profile, Calibration Cache, Repository, History Service, Event Bus
+- **2 repository implementations**: Memory (tests), LocalStorage (production)
+- **ADR-008**: Repository Abstraction (dependency inversion for all storage)
 
 ## Last Commit
-- **Hash:** 2787958
-- **Message:** `feat(phase-3): plugin architecture, all screens, app shell`
+- **Hash:** pending
+- **Message:** `feat(phase-4): persistent platform core`
 - **Date:** 2026-07-17
 
 ## Last Tag
-- `v2.0-phase-3`
+- `v2.0-phase4`
 
 ## Last Snapshot
-- `focus-v2-phase-3-snapshot-2026-07-17.tar.gz` (215KB)
+- `focus-v2-phase4-snapshot-2026-07-17.tar.gz`
 
 ## Open Risks
 - GitHub remote not configured
 - No E2E tests
-- localStorage-only persistence
+- System memory constraints affect build times
 
 ## Next Decision
-Proceed to Phase 4: Data Persistence + Session Management.
+Proceed to Phase 5: Supabase + Offline Sync.
