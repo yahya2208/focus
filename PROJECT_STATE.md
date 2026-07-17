@@ -69,15 +69,15 @@
 - **ADR-008**: Repository Abstraction
 
 ## Last Commit
-- **Hash:** TBD (Phase 8 commit pending)
-- **Message:** `feat(phase-8): ai coach cognitive intelligence layer`
+- **Hash:** 84c2fe0
+- **Message:** `feat(phase-8): ai coach cognitive intelligence layer - 16 modules, coach screen, 212 tests`
 - **Date:** 2026-07-17
 
 ## Last Tag
 - `v2.0-phase8`
 
 ## Last Snapshot
-- TBD (Phase 8 snapshot pending)
+- `focus-v2-phase8-snapshot-2026-07-17.tar.gz`
 
 ## Open Risks
 - GitHub remote not configured
