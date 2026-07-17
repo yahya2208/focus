@@ -16,7 +16,8 @@ export type ScreenName =
   | 'landing'
   | 'share'
   | 'register'
-  | 'research';
+  | 'research'
+  | 'coach';
 
 export interface SessionRecord {
   readonly id: string;
