@@ -15,6 +15,7 @@ import { AboutScreen } from './screens/about/AboutScreen';
 import { LandingScreen } from './screens/landing/LandingScreen';
 import { ShareScreen } from './screens/share/ShareScreen';
 import { RegisterScreen } from './screens/register/RegisterScreen';
+import { ResearchConsole } from './research-console/ResearchConsole';
 import type { ScreenName } from './store/navigation';
 
 const screens: Record<ScreenName, React.FC> = {
@@ -31,6 +32,7 @@ const screens: Record<ScreenName, React.FC> = {
   landing: LandingScreen,
   share: ShareScreen,
   register: RegisterScreen,
+  research: ResearchConsole,
 };
 
 function ScreenRouter() {
