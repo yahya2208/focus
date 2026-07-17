@@ -18,54 +18,54 @@ export { createMemorySessionRepository, createLocalStorageSessionRepository } fr
 export { getSettings, updateSettings, subscribeSettings, type AppSettings } from './config/settings';
 
 export {
-  createSession,
-  transitionSession,
-  updateSessionMeasurements,
-  canTransition,
-  isSessionComplete,
-  getSessionDuration,
-  createSessionId,
-  type Session,
-  type SessionStatus,
-  type SessionDraft,
-  type SessionMeasurements,
-  type SessionScientificResults,
-  type SessionMetadata,
+  createSession, transitionSession, updateSessionMeasurements,
+  canTransition, isSessionComplete, getSessionDuration, createSessionId,
+  type Session, type SessionStatus, type SessionDraft,
+  type SessionMeasurements, type SessionScientificResults, type SessionMetadata,
 } from './session';
 
 export {
-  collectDeviceProfile,
-  resetDeviceProfile,
-  createDeviceProfileForTest,
+  collectDeviceProfile, resetDeviceProfile, createDeviceProfileForTest,
   type DeviceProfile,
 } from './device';
 
 export {
-  createEventPublisher,
-  getGlobalEventPublisher,
-  resetGlobalEventPublisher,
-  type EventPublisher,
-  type DomainEvent,
-  type EventType,
-  type EventHandler,
+  createEventPublisher, getGlobalEventPublisher, resetGlobalEventPublisher,
+  type EventPublisher, type DomainEvent, type EventType, type EventHandler,
 } from './events';
 
 export {
-  getDefaultPolicy,
-  isCalibrationValid,
-  createCacheEntry,
-  createCalibrationCache,
-  createInMemoryCalibrationCache,
-  type CalibrationCacheEntry,
-  type CalibrationPolicy,
-  type CalibrationCache,
+  getDefaultPolicy, isCalibrationValid, createCacheEntry,
+  createCalibrationCache, createInMemoryCalibrationCache,
+  type CalibrationCacheEntry, type CalibrationPolicy, type CalibrationCache,
 } from './calibration-cache';
 
 export {
   createHistoryService,
-  type HistoryService,
-  type HistoryStats,
-  type TrendPoint,
-  type TrendPeriod,
-  type HistorySearchResult,
+  type HistoryService, type HistoryStats, type TrendPoint, type TrendPeriod, type HistorySearchResult,
 } from './history';
+
+export {
+  initSupabase, getSupabaseClient, resetSupabaseClient, createSupabaseClientForTest,
+  type SupabaseConfig,
+} from './supabase/client';
+
+export {
+  createAuthService,
+  type AuthService, type AuthState, type AuthUser, type AuthStatus, type AuthStateChangeHandler,
+} from './auth';
+
+export {
+  createOfflineQueue, resolveConflict, calculateRetryDelay, shouldRetry, createSyncManager,
+  type QueueItem, type QueueStatus, type OfflineQueue, type ConflictResolution,
+  type SyncResult, type RetryConfig, type SyncStatus, type SyncManager,
+} from './offline';
+
+export {
+  createSupabaseSessionRepository,
+} from './supabase/session-repository';
+
+export {
+  createTelemetryService, getGlobalTelemetry, resetGlobalTelemetry,
+  type TelemetryService, type TelemetryEvent, type TelemetryEventType, type TelemetryConfig,
+} from './telemetry';

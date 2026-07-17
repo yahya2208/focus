@@ -3,7 +3,7 @@
 *Single Source of Truth. Read before any implementation.*
 
 ## Current Version
-**v0.1.0-alpha** — Persistent Platform Core
+**v0.1.0-alpha** — Supabase Platform
 
 ## Progress
 | Phase | Status | Tag |
@@ -16,7 +16,7 @@
 | Phase 3: Plugin Architecture + Game01 | ✅ Complete | `v2.0-phase-3` |
 | Phase 3.5: Alpha Review (M1) | ✅ Complete | `v2.0-m1-alpha` |
 | Phase 4: Persistent Platform Core | ✅ Complete | `v2.0-phase4` |
-| Phase 5: Supabase + Offline Sync | ⏳ Pending | — |
+| Phase 5: Supabase Platform | ✅ Complete | `v2.0-phase5` |
 | Phase 6: QR Experience | ⏳ Pending | — |
 | Phase 7: Research Console (M2) | ⏳ Pending | — |
 | Phase 7.5: Scientific Validation | ⏳ Pending | — |
@@ -37,30 +37,33 @@
 | M5 — Release | v1.0 | ⏳ |
 
 ## Test Coverage
-- **86 tests** across 15 test files
+- **126 tests** across 19 test files
 - Phase 2 Core: 29 (reaction, consistency, fatigue, scoring, measurement, repository, infrastructure)
 - Phase 3: 8 (plugin 6 + app 2)
 - Phase 4: 49 (session 10, device 5, events 10, calibration-cache 8, session-repository 10, history 6)
+- Phase 5: 40 (auth 10, offline 19, telemetry 9, supabase-client 2)
 
-## Architecture Summary (Phase 4)
+## Architecture Summary (Phase 5)
 - **10 screens**: Home, Library, Intro, Calibration, Countdown, Game, Results, History, Settings, About
 - **1 plugin**: Reaction Light Test
 - **5 scientific engines**: Reaction, Consistency, Fatigue, Scoring, Measurement Pipeline
 - **3 stores**: Navigation, Settings, Theme
-- **6 new modules**: Session Lifecycle, Device Profile, Calibration Cache, Repository, History Service, Event Bus
-- **2 repository implementations**: Memory (tests), LocalStorage (production)
+- **9 core modules**: Session Lifecycle, Device Profile, Calibration Cache, Repository, History Service, Event Bus, Auth, Offline Queue, Telemetry
+- **3 Supabase modules**: Client, Auth, Session Repository
+- **2 repository implementations**: Memory (tests), LocalStorage (production), Supabase (production)
+- **Database schema**: 5 tables with RLS policies (users, sessions, devices, calibrations, surveys)
 - **ADR-008**: Repository Abstraction (dependency inversion for all storage)
 
 ## Last Commit
 - **Hash:** pending
-- **Message:** `feat(phase-4): persistent platform core`
+- **Message:** `feat(phase-5): supabase platform`
 - **Date:** 2026-07-17
 
 ## Last Tag
-- `v2.0-phase4`
+- `v2.0-phase5`
 
 ## Last Snapshot
-- `focus-v2-phase4-snapshot-2026-07-17.tar.gz`
+- `focus-v2-phase5-snapshot-2026-07-17.tar.gz`
 
 ## Open Risks
 - GitHub remote not configured
@@ -68,4 +71,4 @@
 - System memory constraints affect build times
 
 ## Next Decision
-Proceed to Phase 5: Supabase + Offline Sync.
+Proceed to Phase 6: QR Experience.
