@@ -1,4 +1,5 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
@@ -16,10 +17,12 @@ export function Button({
   style,
   ...rest
 }: ButtonProps) {
+  const colors = useThemeColors();
+
   const variantStyles: Record<string, React.CSSProperties> = {
-    primary: { background: '#6366f1', color: 'white' },
-    secondary: { background: '#1e1e2e', color: '#e0e0e0', border: '1px solid #333' },
-    danger: { background: '#ef4444', color: 'white' },
+    primary: { background: colors.accent, color: 'white' },
+    secondary: { background: colors.bgInput, color: colors.text, border: `1px solid ${colors.borderLight}` },
+    danger: { background: colors.danger, color: 'white' },
   };
 
   const sizeStyles: Record<string, React.CSSProperties> = {

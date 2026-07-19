@@ -2,12 +2,16 @@ import { useState, useCallback } from 'react';
 import { useAppDispatch } from '../../store/navigation';
 import { createShareHandler, SHARE_PLATFORMS } from '../../core/qr/share';
 import { generateQRDataUrl } from '../../core/qr/generate';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { Button } from '../../components/shared/Button';
 import { Card } from '../../components/shared/Card';
 import { getGlobalTelemetry } from '../../core/telemetry';
 
 export function ShareScreen() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -30,7 +34,7 @@ export function ShareScreen() {
         setCopied(false);
       }
     } else {
-      const payload = { url: shareUrl, title: 'FOCUS - اختبر تركيزك' };
+      const payload = { url: shareUrl, title: 'FOCUS' };
       shareHandler.share(platform, payload);
     }
     getGlobalTelemetry().track('share_clicked', { platform });
@@ -42,13 +46,13 @@ export function ShareScreen() {
 
   return (
     <nav aria-label="Share" style={{ padding: '2rem', maxWidth: '480px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f0f0f0', textAlign: 'center', marginBottom: '1.5rem' }}>
-        تحدَّ صديقك
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, textAlign: 'center', marginBottom: '1.5rem' }}>
+        {t('share.title')}
       </h1>
 
       <Card>
-        <p style={{ color: '#aaa', textAlign: 'center', marginBottom: '1.5rem' }}>
-          شارك تجربتك واختبر تركيز أصدقائك
+        <p style={{ color: colors.textSecondary, textAlign: 'center', marginBottom: '1.5rem' }}>
+          {t('share.subtitle')}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -64,15 +68,15 @@ export function ShareScreen() {
         </div>
 
         {copied && (
-          <p style={{ color: '#22c55e', textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
-            تم النسخ!
+          <p style={{ color: colors.success, textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
+            {t('share.copied')}
           </p>
         )}
       </Card>
 
       {qrDataUrl && (
         <Card style={{ marginTop: '1rem', textAlign: 'center' as const }}>
-          <p style={{ color: '#888', marginBottom: '1rem' }}>QR Code</p>
+          <p style={{ color: colors.textMuted, marginBottom: '1rem' }}>{t('share.qrCode')}</p>
           <img src={qrDataUrl} alt="QR Code to share" style={{ width: '200px', height: '200px', borderRadius: '8px' }} />
         </Card>
       )}
@@ -80,14 +84,14 @@ export function ShareScreen() {
       {!qrDataUrl && (
         <div style={{ marginTop: '1rem' }}>
           <Button variant="secondary" onClick={handleChallengeFriend}>
-            Generate QR Code
+            {t('share.generateQR')}
           </Button>
         </div>
       )}
 
       <div style={{ marginTop: '1.5rem' }}>
         <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'home' })}>
-          Back to Home
+          {t('share.backToHome')}
         </Button>
       </div>
     </nav>

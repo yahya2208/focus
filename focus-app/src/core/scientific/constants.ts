@@ -1,5 +1,5 @@
 export const VERSION = '2.0.0';
-export const VALIDATION_STATUS = 'pending' as const;
+export const VALIDATION_STATUS = 'implemented' as const;
 
 export const CALIBRATION = {
   FRAME_BUDGET_MS: 16.667,

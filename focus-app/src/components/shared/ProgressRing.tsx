@@ -1,3 +1,5 @@
+import { useThemeColors } from '../../hooks/useThemeColors';
+
 interface ProgressRingProps {
   value: number;
   max?: number;
@@ -12,9 +14,11 @@ export function ProgressRing({
   max = 100,
   size = 120,
   strokeWidth = 8,
-  color = '#6366f1',
+  color,
   label,
 }: ProgressRingProps) {
+  const colors = useThemeColors();
+  const ringColor = color ?? colors.accent;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(value / max, 1);
@@ -35,7 +39,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#1e1e2e"
+          stroke={colors.progressBg}
           strokeWidth={strokeWidth}
         />
         <circle
@@ -43,7 +47,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={ringColor}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -56,7 +60,7 @@ export function ProgressRing({
           position: 'absolute',
           fontSize: `${size / 4}px`,
           fontWeight: 'bold',
-          color: '#f0f0f0',
+          color: colors.text,
           fontFamily: 'system-ui, sans-serif',
         }}
       >

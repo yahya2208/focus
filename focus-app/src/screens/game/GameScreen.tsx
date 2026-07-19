@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppDispatch, useAppState } from '../../store/navigation';
 import { correctReactionTime } from '../../core/measurement';
 import { REACTION } from '../../core/scientific/constants';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 type Phase = 'waiting' | 'ready' | 'stimulus' | 'responded' | 'tooEarly';
 
@@ -12,6 +14,8 @@ const MAX_DELAY_MS = 4000;
 export function GameScreen() {
   const dispatch = useAppDispatch();
   const { calibrationProfile } = useAppState();
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const [phase, setPhase] = useState<Phase>('waiting');
   const [round, setRound] = useState(0);
   const [rawRts, setRawRts] = useState<number[]>([]);
@@ -77,7 +81,7 @@ export function GameScreen() {
     }
   };
 
-  const bg = phase === 'stimulus' ? '#22c55e' : '#0a0a0f';
+  const bg = phase === 'stimulus' ? colors.success : colors.bg;
 
   return (
     <nav
@@ -98,23 +102,16 @@ export function GameScreen() {
         outline: 'none',
       }}
     >
-      <div style={{ textAlign: 'center', color: '#f0f0f0' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-          {phase === 'waiting' && '⏳'}
-          {phase === 'ready' && '👀'}
-          {phase === 'stimulus' && '👆'}
-          {phase === 'responded' && '✓'}
-          {phase === 'tooEarly' && '✗'}
+      <div style={{ textAlign: 'center', color: colors.text }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+          {phase === 'waiting' && t('game.waiting')}
+          {phase === 'ready' && t('game.ready')}
+          {phase === 'stimulus' && t('game.stimulus')}
+          {phase === 'responded' && t('game.responded')}
+          {phase === 'tooEarly' && t('game.tooEarly')}
         </div>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-          {phase === 'waiting' && 'Wait...'}
-          {phase === 'ready' && 'Wait for green...'}
-          {phase === 'stimulus' && 'TAP NOW!'}
-          {phase === 'responded' && 'Good!'}
-          {phase === 'tooEarly' && 'Too early!'}
-        </p>
-        <p style={{ color: '#888', marginTop: '1rem' }}>
-          Round {Math.min(round + 1, TOTAL_ROUNDS)} / {TOTAL_ROUNDS}
+        <p style={{ color: colors.textMuted, marginTop: '1rem' }}>
+          {t('game.round')} {Math.min(round + 1, TOTAL_ROUNDS)} {t('game.of')} {TOTAL_ROUNDS}
         </p>
       </div>
     </nav>

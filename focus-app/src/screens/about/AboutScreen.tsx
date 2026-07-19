@@ -1,44 +1,46 @@
 import { useAppDispatch } from '../../store/navigation';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 
 export function AboutScreen() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
+  const colors = useThemeColors();
 
   return (
     <nav aria-label="About FOCUS" style={{ padding: '2rem', maxWidth: '480px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f0f0f0', marginBottom: '1.5rem' }}>
-        About FOCUS
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, marginBottom: '1.5rem' }}>
+        {t('about.title')}
       </h1>
       <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: '#f0f0f0', marginBottom: '0.5rem' }}>Cognitive Measurement Platform</h2>
-        <p style={{ color: '#888', lineHeight: 1.6 }}>
-          FOCUS uses scientifically validated measurement techniques to assess cognitive
-          performance. All measurements are calibrated for your specific device to ensure
-          accuracy.
+        <h2 style={{ color: colors.text, marginBottom: '0.5rem' }}>{t('about.cognitivePlatform')}</h2>
+        <p style={{ color: colors.textMuted, lineHeight: 1.6 }}>
+          {t('about.description')}
         </p>
       </Card>
       <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: '#f0f0f0', marginBottom: '0.5rem' }}>Scientific Foundation</h2>
-        <ul style={{ color: '#888', lineHeight: 1.8, paddingLeft: '1.25rem' }}>
-          <li>Display calibration with ±2ms precision</li>
-          <li>Device-specific input lag compensation</li>
-          <li>Statistical outlier removal (IQR method)</li>
-          <li>Fatigue detection via linear regression</li>
-          <li>Composite scoring: Consistency 40% + Fatigue 30% + Completion 30%</li>
+        <h2 style={{ color: colors.text, marginBottom: '0.5rem' }}>{t('about.scientificFoundation')}</h2>
+        <ul style={{ color: colors.textMuted, lineHeight: 1.8, paddingLeft: '1.25rem' }}>
+          <li>{t('about.calibrationPrecision')}</li>
+          <li>{t('about.inputLag')}</li>
+          <li>{t('about.outlierRemoval')}</li>
+          <li>{t('about.fatigueDetection')}</li>
+          <li>{t('about.scoring')}</li>
         </ul>
       </Card>
       <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: '#f0f0f0', marginBottom: '0.5rem' }}>Privacy</h2>
-        <p style={{ color: '#888', lineHeight: 1.6 }}>
-          All data is stored locally on your device. No data is transmitted to external servers.
+        <h2 style={{ color: colors.text, marginBottom: '0.5rem' }}>{t('about.privacy')}</h2>
+        <p style={{ color: colors.textMuted, lineHeight: 1.6 }}>
+          {t('about.privacyDescription')}
         </p>
       </Card>
-      <p style={{ color: '#555', textAlign: 'center', fontSize: '0.875rem', marginTop: '1rem' }}>
-        FOCUS v0.1.0-alpha
+      <p style={{ color: colors.textFaint, textAlign: 'center', fontSize: '0.875rem', marginTop: '1rem' }}>
+        {t('app.version')}
       </p>
       <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'home' })} style={{ marginTop: '1rem' }}>
-        Back
+        {t('about.back')}
       </Button>
     </nav>
   );

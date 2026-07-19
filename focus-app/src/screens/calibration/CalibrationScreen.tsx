@@ -2,10 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useAppDispatch } from '../../store/navigation';
 import { CALIBRATION } from '../../core/scientific/constants';
 import { createDefaultCalibrationProfile } from '../../core/calibration';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { Card } from '../../components/shared/Card';
 
 export function CalibrationScreen() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const [status, setStatus] = useState<'detecting' | 'complete'>('detecting');
   const [frameCount, setFrameCount] = useState(0);
   const framesRef = useRef<number[]>([]);
@@ -55,7 +59,7 @@ export function CalibrationScreen() {
 
         dispatch({ type: 'SET_CALIBRATION', profile });
 
-        setTimeout(() => dispatch({ type: 'NAVIGATE', screen: 'countdown' }), 1000);
+        setTimeout(() => dispatch({ type: 'NAVIGATE', screen: 'game' }), 1000);
       } else {
         rafRef.current = requestAnimationFrame(measure);
       }
@@ -68,14 +72,14 @@ export function CalibrationScreen() {
   return (
     <nav aria-label="Calibration in progress" style={{ padding: '2rem', maxWidth: '480px', margin: '0 auto' }}>
       <Card>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f0f0f0', marginBottom: '1rem' }}>
-          Calibration
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, marginBottom: '1rem' }}>
+          {t('calibration.title')}
         </h1>
-        <div role="status" aria-live="polite" style={{ color: '#aaa', marginBottom: '1rem' }}>
+        <div role="status" aria-live="polite" style={{ color: colors.textSecondary, marginBottom: '1rem' }}>
           {status === 'detecting' ? (
-            <p>Detecting display refresh rate... ({frameCount}/{CALIBRATION.MIN_SAMPLES} samples)</p>
+            <p>{t('calibration.detecting')} ({frameCount}/{CALIBRATION.MIN_SAMPLES} {t('calibration.samples')})</p>
           ) : (
-            <p style={{ color: '#4ade80' }}>Calibration complete! Starting game...</p>
+            <p style={{ color: colors.success }}>{t('calibration.complete')}</p>
           )}
         </div>
         <div
@@ -86,7 +90,7 @@ export function CalibrationScreen() {
           style={{
             width: '100%',
             height: '8px',
-            background: '#1e1e2e',
+            background: colors.progressBg,
             borderRadius: '4px',
             overflow: 'hidden',
           }}
@@ -95,7 +99,7 @@ export function CalibrationScreen() {
             style={{
               width: `${(frameCount / CALIBRATION.MIN_SAMPLES) * 100}%`,
               height: '100%',
-              background: '#6366f1',
+              background: colors.accent,
               borderRadius: '4px',
               transition: 'width 0.1s',
             }}

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../store/navigation';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { Card } from '../../components/shared/Card';
 
 export function CountdownScreen() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const [count, setCount] = useState(3);
 
   useEffect(() => {
     if (count <= 0) {
-      dispatch({ type: 'NAVIGATE', screen: 'game' });
+      dispatch({ type: 'NAVIGATE', screen: 'calibration' });
       return;
     }
     const timer = setTimeout(() => setCount(count - 1), 1000);
@@ -22,11 +26,11 @@ export function CountdownScreen() {
           role="timer"
           aria-live="assertive"
           aria-atomic="true"
-          style={{ fontSize: '6rem', fontWeight: 'bold', color: '#6366f1' }}
+          style={{ fontSize: '6rem', fontWeight: 'bold', color: colors.accent }}
         >
           {count > 0 ? count : 'GO'}
         </div>
-        <p style={{ color: '#888', marginTop: '0.5rem' }}>Get ready...</p>
+        <p style={{ color: colors.textMuted, marginTop: '0.5rem' }}>{t('countdown.getReady')}</p>
       </Card>
     </nav>
   );

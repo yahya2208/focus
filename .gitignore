@@ -10,3 +10,13 @@ ios/
 coverage/
 .vitest/
 *.tsbuildinfo
+*.txt
+focus-app/pyserver.py
+focus-app/launch.vbs
+focus-app/run-tests.vbs
+focus-app/serve.js
+focus-app/start-dev.bat
+focus-app/start-dev.vbs
+focus-app/start-server.cmd
+focus-app/start-server.vbs
+run-tests.js

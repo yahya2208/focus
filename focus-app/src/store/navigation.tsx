@@ -16,6 +16,8 @@ export type ScreenName =
   | 'landing'
   | 'share'
   | 'register'
+  | 'consent'
+  | 'message'
   | 'research'
   | 'coach';
 

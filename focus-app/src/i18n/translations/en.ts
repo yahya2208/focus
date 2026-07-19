@@ -1,0 +1,203 @@
+const en = {
+  // App
+  'app.title': 'FOCUS',
+  'app.subtitle': 'Cognitive Measurement Platform',
+  'app.version': 'FOCUS v0.1.0-alpha',
+
+  // Home
+  'home.startMeasurement': 'Start Measurement',
+  'home.sessionHistory': 'Session History',
+  'home.settings': 'Settings',
+  'home.about': 'About',
+  'home.aiCoach': 'AI Coach',
+  'home.researchConsole': 'Research Console',
+
+  // Library
+  'library.title': 'Game Library',
+  'library.reactionLight.name': 'Reaction Light Test',
+  'library.reactionLight.description': 'Tap when the light appears. Measures reaction time and consistency.',
+  'library.select': 'Select',
+  'library.back': 'Back',
+
+  // Intro
+  'intro.title': 'Reaction Light Test',
+  'intro.howItWorks': 'How it works:',
+  'intro.step1': 'First, we calibrate your device display',
+  'intro.step2': 'A colored light will appear on screen',
+  'intro.step3': 'Tap anywhere as fast as you can',
+  'intro.step4': 'We measure your reaction time with scientific accuracy',
+  'intro.gameMode': 'Game mode:',
+  'intro.startCalibration': 'Start Calibration',
+  'intro.back': 'Back',
+
+  // Calibration
+  'calibration.title': 'Calibration',
+  'calibration.detecting': 'Detecting display refresh rate...',
+  'calibration.complete': 'Calibration complete! Starting game...',
+  'calibration.samples': 'samples',
+
+  // Countdown
+  'countdown.getReady': 'Get ready...',
+
+  // Game
+  'game.waiting': 'Wait...',
+  'game.ready': 'Wait for green...',
+  'game.stimulus': 'TAP NOW!',
+  'game.responded': 'Good!',
+  'game.tooEarly': 'Too early!',
+  'game.round': 'Round',
+  'game.of': '/',
+
+  // Results
+  'results.title': 'Results',
+  'results.focusScore': 'Focus Score',
+  'results.grade': 'Grade',
+  'results.reactionTimes': 'Reaction Times',
+  'results.mean': 'Mean',
+  'results.sd': 'SD',
+  'results.cv': 'CV',
+  'results.iqr': 'IQR',
+  'results.consistency': 'Consistency',
+  'results.outliers': 'Outliers',
+  'results.rating': 'Rating',
+  'results.fatigue': 'Fatigue',
+  'results.slope': 'Slope',
+  'results.detected': 'Detected',
+  'results.yes': 'Yes',
+  'results.no': 'No',
+  'results.saveAndExit': 'Save & Exit',
+  'results.challengeFriend': 'Challenge a Friend',
+  'results.register': 'Register',
+  'results.aiCoach': 'AI Coach',
+  'results.discard': 'Discard',
+  'results.noResults': 'No results available.',
+
+  // History
+  'history.title': 'Session History',
+  'history.noSessions': 'No sessions yet. Complete a measurement to see results here.',
+  'history.back': 'Back',
+
+  // Settings
+  'settings.title': 'Settings',
+  'settings.theme': 'Theme',
+  'settings.system': 'System',
+  'settings.light': 'Light',
+  'settings.dark': 'Dark',
+  'settings.language': 'Language',
+  'settings.accessibility': 'Accessibility',
+  'settings.reducedMotion': 'Reduce animations',
+  'settings.highContrast': 'High contrast mode',
+  'settings.back': 'Back',
+  'settings.researchConsole': 'Research Console',
+
+  // About
+  'about.title': 'About FOCUS',
+  'about.cognitivePlatform': 'Cognitive Measurement Platform',
+  'about.description': 'FOCUS uses scientifically validated measurement techniques to assess cognitive performance. All measurements are calibrated for your specific device to ensure accuracy.',
+  'about.scientificFoundation': 'Scientific Foundation',
+  'about.calibrationPrecision': 'Display calibration with ±2ms precision',
+  'about.inputLag': 'Device-specific input lag compensation',
+  'about.outlierRemoval': 'Statistical outlier removal (IQR method)',
+  'about.fatigueDetection': 'Fatigue detection via linear regression',
+  'about.scoring': 'Composite scoring: Consistency 40% + Fatigue 30% + Completion 30%',
+  'about.privacy': 'Privacy',
+  'about.privacyDescription': 'All data is stored locally on your device. No data is transmitted to external servers.',
+  'about.back': 'Back',
+
+  // Landing
+  'landing.title': 'Test your focus in under a minute',
+  'landing.subtitle': 'Discover your attention speed with scientific accuracy, for free.',
+  'landing.startNow': 'Start Now',
+  'landing.howItWorks': 'How it works?',
+  'landing.scientificAccuracy': 'Scientific accuracy',
+  'landing.privacyProtected': 'Your privacy is protected',
+  'landing.noDownload': 'Works instantly without download',
+  'landing.pwa': 'PWA - Can be installed',
+
+  // Share
+  'share.title': 'Challenge a Friend',
+  'share.subtitle': 'Share your experience and test your friends\' focus',
+  'share.qrCode': 'QR Code',
+  'share.generateQR': 'Generate QR Code',
+  'share.copied': 'Copied!',
+  'share.backToHome': 'Back to Home',
+
+  // Register
+  'register.title': 'Save your results',
+  'register.subtitle': 'Track your focus progress',
+  'register.email': 'Email',
+  'register.displayName': 'Display Name (optional)',
+  'register.emailPlaceholder': 'you@example.com',
+  'register.namePlaceholder': 'Your name',
+  'register.createAccount': 'Create Account',
+  'register.magicLink': 'Magic Link',
+  'register.continueGoogle': 'Continue with Google',
+  'register.continueGuest': 'Continue as Guest',
+  'register.emailRequired': 'Email is required',
+  'register.emailRequiredMagic': 'Email is required for Magic Link',
+
+  // Consent
+  'consent.title': 'Informed Consent',
+  'consent.description': 'You are about to participate in a cognitive measurement session.',
+  'consent.purpose': 'Purpose',
+  'consent.purposeText': 'Your reaction time data will be used for scientific research on cognitive performance.',
+  'consent.dataCollection': 'Data Collection',
+  'consent.dataCollectionText': 'We collect reaction times, device calibration data, and session metadata. No personal information is required.',
+  'consent.voluntary': 'Voluntary Participation',
+  'consent.voluntaryText': 'Your participation is entirely voluntary. You may withdraw at any time.',
+  'consent.agree': 'I Agree & Continue',
+  'consent.decline': 'Decline',
+
+  // Pre-game message
+  'message.title': 'You are about to discover your response speed and focus.',
+  'message.subtitle': 'This is a scientific measurement, not a game.',
+  'message.ready': 'Ready?',
+
+  // Coach
+  'coach.title': 'AI Coach',
+  'coach.sessions': 'sessions',
+  'coach.noData': 'Complete at least one session to unlock AI coaching insights.',
+  'coach.backToHome': 'Back to Home',
+  'coach.overview': 'Overview',
+  'coach.trends': 'Trends',
+  'coach.goals': 'Goals',
+  'coach.insights': 'Insights',
+  'coach.passport': 'Passport',
+  'coach.confidenceLevel': 'Confidence Level',
+  'coach.performanceDimensions': 'Performance Dimensions',
+  'coach.topRecommendations': 'Top Recommendations',
+  'coach.activeGoals': 'Active Goals',
+  'coach.noRecommendations': 'No recommendations yet.',
+  'coach.noActiveGoals': 'No active goals.',
+  'coach.cognitiveProfile': 'Cognitive Profile',
+  'coach.overallScore': 'Overall Score',
+  'coach.reliability': 'Reliability',
+  'coach.dominantStrength': 'Dominant Strength',
+  'coach.primaryFocus': 'Primary Focus',
+  'coach.strengths': 'Strengths',
+  'coach.areasToImprove': 'Areas to Improve',
+  'coach.milestones': 'Milestones',
+  'coach.dailyReport': 'Daily Report',
+  'coach.weeklyReport': 'Weekly Report',
+  'coach.monthlyReport': 'Monthly Report',
+  'coach.longitudinalReport': 'Longitudinal Report',
+  'coach.export': 'Export',
+  'coach.noGoals': 'No goals defined. Complete more sessions to generate adaptive goals.',
+  'coach.noInsights': 'Insufficient data for insights. Keep training!',
+  'coach.noTrends': 'No trend data available.',
+  'coach.noDataPoints': 'No data points available.',
+
+  // Research Console
+  'research.title': 'Research Console',
+  'research.overview': 'Overview',
+  'research.sessions': 'Sessions',
+  'research.users': 'Users',
+  'research.cohorts': 'Cohorts',
+  'research.surveys': 'Surveys',
+  'research.campaigns': 'Campaigns',
+  'research.export': 'Export',
+  'research.back': 'Back',
+} as const;
+
+export default en;
+export type TranslationKey = keyof typeof en;

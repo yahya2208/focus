@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface CardProps {
   children: ReactNode;
@@ -8,15 +9,16 @@ interface CardProps {
 }
 
 export function Card({ children, padding = '1.5rem', elevated = true, style }: CardProps) {
+  const colors = useThemeColors();
   return (
     <div
       role="region"
       style={{
-        background: '#12121a',
+        background: colors.bgCard,
         borderRadius: '12px',
         padding,
-        boxShadow: elevated ? '0 4px 12px rgba(0, 0, 0, 0.3)' : 'none',
-        border: '1px solid #1e1e2e',
+        boxShadow: elevated ? `0 4px 12px ${colors.shadow}` : 'none',
+        border: `1px solid ${colors.border}`,
         ...style,
       }}
     >

@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { AppProvider } from '../../store/navigation';
+import { TranslationProvider } from '../../hooks/useTranslation';
 import { CoachScreen } from '../../screens/coach/CoachScreen';
 
 afterEach(() => {
@@ -11,7 +12,9 @@ describe('CoachScreen', () => {
   it('should show empty state with no sessions', () => {
     render(
       <AppProvider>
-        <CoachScreen />
+        <TranslationProvider>
+          <CoachScreen />
+        </TranslationProvider>
       </AppProvider>,
     );
     expect(screen.getByRole('heading', { name: 'AI Coach' })).toBeTruthy();
@@ -21,7 +24,9 @@ describe('CoachScreen', () => {
   it('should have accessible nav', () => {
     render(
       <AppProvider>
-        <CoachScreen />
+        <TranslationProvider>
+          <CoachScreen />
+        </TranslationProvider>
       </AppProvider>,
     );
     expect(screen.getByRole('navigation', { name: 'AI Coach' })).toBeTruthy();
@@ -30,7 +35,9 @@ describe('CoachScreen', () => {
   it('should have back button', () => {
     render(
       <AppProvider>
-        <CoachScreen />
+        <TranslationProvider>
+          <CoachScreen />
+        </TranslationProvider>
       </AppProvider>,
     );
     expect(screen.getByRole('button', { name: 'Back to Home' })).toBeTruthy();
@@ -39,10 +46,12 @@ describe('CoachScreen', () => {
   it('should render empty state text', () => {
     const { container } = render(
       <AppProvider>
-        <CoachScreen />
+        <TranslationProvider>
+          <CoachScreen />
+        </TranslationProvider>
       </AppProvider>,
     );
     expect(container.textContent).toContain('AI Coach');
-    expect(container.textContent).toContain('session');
+    expect(container.textContent).toContain('Complete at least one session');
   });
 });
