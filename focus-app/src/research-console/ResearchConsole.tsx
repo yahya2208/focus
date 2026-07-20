@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppDispatch } from '../store/navigation';
+import { useAuth } from '../core/auth/AuthProvider';
+import { createPermissionGuard, type ResearchRole } from '../core/research/permissions';
 import { useTranslation } from '../hooks/useTranslation';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { OverviewDashboard } from './pages/overview/OverviewDashboard';
@@ -12,6 +14,27 @@ import { CampaignsDashboard } from './pages/campaigns/CampaignsDashboard';
 import { LiveDashboard } from './pages/live/LiveDashboard';
 import { SystemDashboard } from './pages/system/SystemDashboard';
 import type { DashboardId } from './layout/ResearchLayout';
+
+const guard = createPermissionGuard();
+
+const RESEARCH_ROLE_MAP: Partial<Record<ResearchRole, 'super_admin' | 'research_admin' | 'analyst' | 'viewer'>> = {
+  super_admin: 'super_admin',
+  research_admin: 'research_admin',
+  analyst: 'analyst',
+  viewer: 'viewer',
+};
+
+const DASHBOARD_RESOURCE_MAP: Record<DashboardId, string> = {
+  overview: 'overview',
+  scientific: 'scientific',
+  users: 'users',
+  sessions: 'sessions',
+  devices: 'devices',
+  surveys: 'surveys',
+  campaigns: 'campaigns',
+  live: 'overview',
+  system: 'overview',
+};
 
 const dashboards: { id: DashboardId; translationKey: string }[] = [
   { id: 'overview', translationKey: 'research.overview' },
@@ -38,16 +61,32 @@ const dashboardComponents: Record<DashboardId, React.FC> = {
 
 export function ResearchConsole() {
   const dispatch = useAppDispatch();
+  const { researchRole } = useAuth();
   const { t } = useTranslation();
   const colors = useThemeColors();
   const [active, setActive] = useState<DashboardId>('overview');
 
-  const Component = dashboardComponents[active];
+  const mappedRole = researchRole !== 'none' ? RESEARCH_ROLE_MAP[researchRole] : undefined;
+
+  const accessibleDashboards = useMemo(() => {
+    if (!mappedRole) return [];
+    return dashboards.filter((d) => {
+      const resource = DASHBOARD_RESOURCE_MAP[d.id];
+      return guard.can(mappedRole, resource, 'read');
+    });
+  }, [mappedRole]);
+
+  const effectiveActive = useMemo(() => {
+    if (accessibleDashboards.some((d) => d.id === active)) return active;
+    return accessibleDashboards[0]?.id ?? 'overview';
+  }, [active, accessibleDashboards]);
+
+  const Component = dashboardComponents[effectiveActive];
 
   return (
     <nav aria-label="Research Console" style={{ minHeight: '100vh', background: colors.bg }}>
       <div style={{ display: 'flex', padding: '0.5rem', gap: '0.25rem', overflowX: 'auto', borderBottom: `1px solid ${colors.border}` }}>
-        {dashboards.map((d) => (
+        {accessibleDashboards.map((d) => (
           <button
             key={d.id}
             onClick={() => setActive(d.id)}
@@ -55,11 +94,11 @@ export function ResearchConsole() {
               padding: '0.5rem 1rem',
               borderRadius: '8px',
               border: 'none',
-              background: active === d.id ? colors.accent : 'transparent',
-              color: active === d.id ? '#fff' : colors.textMuted,
+              background: effectiveActive === d.id ? colors.accent : 'transparent',
+              color: effectiveActive === d.id ? '#fff' : colors.textMuted,
               cursor: 'pointer',
               fontSize: '0.8125rem',
-              fontWeight: active === d.id ? 600 : 400,
+              fontWeight: effectiveActive === d.id ? 600 : 400,
               whiteSpace: 'nowrap',
             }}
           >
@@ -83,7 +122,11 @@ export function ResearchConsole() {
         </button>
       </div>
       <div style={{ padding: '1rem' }}>
-        <Component />
+        {Component ? <Component /> : (
+          <p style={{ color: colors.textMuted, textAlign: 'center', padding: '2rem' }}>
+            {t('research.noAccess')}
+          </p>
+        )}
       </div>
     </nav>
   );

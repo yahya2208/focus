@@ -199,6 +199,56 @@ const en = {
   'research.campaigns': 'Campaigns',
   'research.export': 'Export',
   'research.back': 'Back',
+  'research.noAccess': 'You do not have access to this resource.',
+
+  // Auth
+  'login.title': 'Sign In',
+  'login.subtitle': 'Sign in to access your account',
+  'login.email': 'Email',
+  'login.emailPlaceholder': 'you@example.com',
+  'login.password': 'Password',
+  'login.passwordPlaceholder': 'Enter your password',
+  'login.signIn': 'Sign In',
+  'login.magicLink': 'Magic Link',
+  'login.magicLinkSent': 'Check your email for the magic link!',
+  'login.continueGuest': 'Continue as Guest',
+  'login.noAccount': "Don't have an account? Create one",
+  'login.backToHome': 'Back to Home',
+  'login.fieldsRequired': 'Email and password are required',
+  'login.emailRequiredMagic': 'Email is required for Magic Link',
+  'login.failed': 'Sign in failed. Please try again.',
+
+  'register.passwordTooShort': 'Password must be at least 8 characters',
+  'register.failed': 'Registration failed. Please try again.',
+  'register.hasAccount': 'Already have an account? Sign in',
+
+  // Access Denied
+  'accessDenied.title': 'Access Denied',
+  'accessDenied.message': 'You do not have permission to access this page.',
+  'accessDenied.signIn': 'Sign In as Different User',
+  'accessDenied.backToHome': 'Back to Home',
+
+  // Admin Setup
+  'adminSetup.title': 'Create Super Admin',
+  'adminSetup.subtitle': 'Set up the first administrator account for the platform. This can only be done once.',
+  'adminSetup.checking': 'Checking admin status...',
+  'adminSetup.alreadyExists': 'Administrator Already Exists',
+  'adminSetup.alreadyExistsMessage': 'A super admin account has already been created. Use the login page to sign in.',
+  'adminSetup.goToLogin': 'Go to Login',
+  'adminSetup.fieldsRequired': 'Email and password are required',
+  'adminSetup.passwordPlaceholder': 'Minimum 8 characters',
+  'adminSetup.passwordTooShort': 'Password must be at least 8 characters',
+  'adminSetup.createSuperAdmin': 'Create Super Admin Account',
+  'adminSetup.failed': 'Failed to create admin account.',
+
+  // Settings (admin)
+  'settings.account': 'Account',
+  'settings.guestUser': 'Guest User',
+  'settings.role': 'Role',
+  'settings.signIn': 'Sign In',
+  'settings.signOut': 'Sign Out',
+  'settings.administration': 'Administration',
+  'settings.adminSetup': 'Admin Setup',
 } as const;
 
 export default en;

@@ -3,8 +3,10 @@ import { AppProvider, useAppState, useAppDispatch } from './store/navigation';
 import { ThemeProvider } from './design-system/use-theme';
 import { SettingsProvider } from './hooks/useSettings';
 import { TranslationProvider, useTranslation } from './hooks/useTranslation';
+import { AuthProvider } from './core/auth/AuthProvider';
 import { useThemeSync } from './hooks/useThemeSync';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { LibraryScreen } from './screens/library/LibraryScreen';
 import { IntroScreen } from './screens/intro/IntroScreen';
@@ -22,6 +24,9 @@ import { ConsentScreen } from './screens/consent/ConsentScreen';
 import { PreGameMessageScreen } from './screens/message/PreGameMessageScreen';
 import { ResearchConsole } from './research-console/ResearchConsole';
 import { CoachScreen } from './screens/coach/CoachScreen';
+import { LoginScreen } from './screens/auth/LoginScreen';
+import { AdminSetupScreen } from './screens/auth/AdminSetupScreen';
+import { AccessDeniedScreen } from './screens/auth/AccessDeniedScreen';
 import type { ScreenName } from './store/navigation';
 import { useThemeColors } from './hooks/useThemeColors';
 import { parseDeepLinkFromCurrentUrl } from './core/qr/deeplink';
@@ -44,6 +49,9 @@ const screens: Record<ScreenName, React.FC> = {
   message: PreGameMessageScreen,
   research: ResearchConsole,
   coach: CoachScreen,
+  login: LoginScreen,
+  'admin-setup': AdminSetupScreen,
+  'access-denied': AccessDeniedScreen,
 };
 
 function HtmlSync() {
@@ -77,6 +85,15 @@ function InitialRoute() {
 
 function ScreenRouter() {
   const { currentScreen } = useAppState();
+
+  if (currentScreen === 'research') {
+    return (
+      <ProtectedRoute requiredRole="researcher">
+        <ResearchConsole />
+      </ProtectedRoute>
+    );
+  }
+
   const Screen = screens[currentScreen];
   return <Screen />;
 }
@@ -87,11 +104,13 @@ export default function App() {
       <SettingsProvider>
         <ThemeProvider>
           <TranslationProvider>
-            <AppProvider>
-              <HtmlSync />
-              <InitialRoute />
-              <ScreenRouter />
-            </AppProvider>
+            <AuthProvider>
+              <AppProvider>
+                <HtmlSync />
+                <InitialRoute />
+                <ScreenRouter />
+              </AppProvider>
+            </AuthProvider>
           </TranslationProvider>
         </ThemeProvider>
       </SettingsProvider>

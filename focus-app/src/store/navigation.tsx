@@ -19,7 +19,10 @@ export type ScreenName =
   | 'consent'
   | 'message'
   | 'research'
-  | 'coach';
+  | 'coach'
+  | 'login'
+  | 'admin-setup'
+  | 'access-denied';
 
 export interface SessionRecord {
   readonly id: string;
