@@ -1,117 +1,120 @@
 -- FOCUS v2.0 — Admin Bootstrap Migration
 -- Run after 001_initial_schema.sql
--- This migration adds admin bootstrap support
 
 -- Function to check if any super_admin exists
-create or replace function public.has_super_admin()
-returns boolean as $$
-  select exists (
-    select 1 from public.users where role = 'super_admin'
-  );
-$$ language sql security definer stable;
+CREATE OR REPLACE FUNCTION public.has_super_admin()
+RETURNS boolean AS $$
+  SELECT exists (SELECT 1 FROM public.users WHERE role = 'super_admin');
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- Function to set a user as super_admin (only if no super_admin exists)
-create or replace function public.bootstrap_super_admin(target_user_id uuid)
-returns void as $$
-begin
-  if public.has_super_admin() then
-    raise exception 'A super admin already exists. Use the admin dashboard for role management.';
-  end if;
-
-  update public.users
-  set role = 'super_admin', updated_at = now()
-  where id = target_user_id;
-
-  if not found then
-    raise exception 'User not found.';
-  end if;
-end;
-$$ language plpgsql security definer;
+CREATE OR REPLACE FUNCTION public.bootstrap_super_admin(target_user_id uuid)
+RETURNS void AS $$
+BEGIN
+  IF public.has_super_admin() THEN
+    RAISE EXCEPTION 'A super admin already exists.';
+  END IF;
+  UPDATE public.users SET role = 'super_admin', updated_at = now() WHERE id = target_user_id;
+  IF NOT found THEN RAISE EXCEPTION 'User not found.'; END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Admin role management: promote a user
-create or replace function public.admin_promote_user(
-  target_user_id uuid,
-  new_role text
-)
-returns void as $$
-begin
-  if not public.has_super_admin() then
-    raise exception 'No super admin exists. Bootstrap required first.';
-  end if;
+CREATE OR REPLACE FUNCTION public.admin_promote_user(target_user_id uuid, new_role text)
+RETURNS void AS $$
+BEGIN
+  IF NOT public.has_super_admin() THEN
+    RAISE EXCEPTION 'No super admin exists.';
+  END IF;
+  IF new_role NOT IN ('guest', 'user', 'researcher', 'admin', 'super_admin') THEN
+    RAISE EXCEPTION 'Invalid role: %', new_role;
+  END IF;
+  UPDATE public.users SET role = new_role, updated_at = now() WHERE id = target_user_id;
+  IF NOT found THEN RAISE EXCEPTION 'User not found.'; END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-  if new_role not in ('guest', 'user', 'researcher', 'admin', 'super_admin') then
-    raise exception 'Invalid role: %', new_role;
-  end if;
+-- Auto-create public.users row on Supabase Auth signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, email, display_name, role, is_anonymous)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    coalesce(NEW.raw_user_meta_data ->> 'display_name', ''),
+    coalesce(NEW.raw_user_meta_data ->> 'role', 'guest'),
+    coalesce((NEW.raw_user_meta_data ->> 'is_anonymous')::boolean, true)
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-  update public.users
-  set role = new_role, updated_at = now()
-  where id = target_user_id;
+-- Create auth signup trigger (drop first to avoid duplicate errors)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
-  if not found then
-    raise exception 'User not found.';
-  end if;
-end;
-$$ language plpgsql security definer;
+-- Drop and recreate all new policies to avoid conflicts
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Bootstrap check super_admin" ON public.users;
+  DROP POLICY IF EXISTS "Bootstrap insert first user" ON public.users;
+  DROP POLICY IF EXISTS "Admins promote users" ON public.users;
+  DROP POLICY IF EXISTS "Admins manage all sessions" ON public.sessions;
+  DROP POLICY IF EXISTS "Researchers read all sessions" ON public.sessions;
+  DROP POLICY IF EXISTS "Admins read all devices" ON public.devices;
+  DROP POLICY IF EXISTS "Admins read all calibrations" ON public.calibrations;
+  DROP POLICY IF EXISTS "Admins read all surveys" ON public.surveys;
+  DROP POLICY IF EXISTS "Researchers read all surveys" ON public.surveys;
+END $$;
 
--- Allow admin/super_admin to read all users
-create policy "Admins promote users" on public.users
-  for update using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role in ('admin', 'super_admin')
-    )
+-- Users: allow reading super_admin rows (for bootstrap check)
+CREATE POLICY "Bootstrap check super_admin" ON public.users
+  FOR SELECT USING (role = 'super_admin');
+
+-- Users: allow insert when no super_admin exists (bootstrap)
+CREATE POLICY "Bootstrap insert first user" ON public.users
+  FOR INSERT WITH CHECK (public.has_super_admin() = false);
+
+-- Users: admins can update roles
+CREATE POLICY "Admins promote users" ON public.users
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
--- Allow admin/super_admin to read all sessions for management
-create policy "Admins manage all sessions" on public.sessions
-  for all using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role in ('admin', 'super_admin')
-    )
+-- Sessions: admins manage all
+CREATE POLICY "Admins manage all sessions" ON public.sessions
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
--- Allow researcher to read all sessions (read-only)
-create policy "Researchers read all sessions" on public.sessions
-  for select using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role = 'researcher'
-    )
+-- Sessions: researchers read all
+CREATE POLICY "Researchers read all sessions" ON public.sessions
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'researcher')
   );
 
--- Allow admin/super_admin to read all devices
-create policy "Admins read all devices" on public.devices
-  for select using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role in ('admin', 'super_admin')
-    )
+-- Devices: admins read all
+CREATE POLICY "Admins read all devices" ON public.devices
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
--- Allow admin/super_admin to read all calibrations
-create policy "Admins read all calibrations" on public.calibrations
-  for select using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role in ('admin', 'super_admin')
-    )
+-- Calibrations: admins read all
+CREATE POLICY "Admins read all calibrations" ON public.calibrations
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
--- Allow admin/super_admin to read all surveys
-create policy "Admins read all surveys" on public.surveys
-  for select using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role in ('admin', 'super_admin')
-    )
+-- Surveys: admins read all
+CREATE POLICY "Admins read all surveys" ON public.surveys
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
--- Allow researcher to read all surveys
-create policy "Researchers read all surveys" on public.surveys
-  for select using (
-    exists (
-      select 1 from public.users
-      where id = auth.uid() and role = 'researcher'
-    )
+-- Surveys: researchers read all
+CREATE POLICY "Researchers read all surveys" ON public.surveys
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'researcher')
   );

@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAppDispatch } from '../../store/navigation';
-import { useAuth } from '../../core/auth/AuthProvider';
 import { getSupabaseClient } from '../../core/supabase/client';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useThemeColors } from '../../hooks/useThemeColors';
@@ -9,7 +8,6 @@ import { Card } from '../../components/shared/Card';
 
 export function AdminSetupScreen() {
   const dispatch = useAppDispatch();
-  const { service } = useAuth();
   const { t } = useTranslation();
   const colors = useThemeColors();
   const [email, setEmail] = useState('');
@@ -21,23 +19,26 @@ export function AdminSetupScreen() {
   const [superAdminExists, setSuperAdminExists] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     async function checkSuperAdmin() {
       try {
         const supa = getSupabaseClient();
-        const { data, error } = await supa
-          .from('users')
-          .select('id')
-          .eq('role', 'super_admin')
-          .limit(1);
-        if (error) throw error;
-        setSuperAdminExists((data?.length ?? 0) > 0);
+        const { data, error } = await supa.rpc('has_super_admin');
+        if (cancelled) return;
+        if (error) {
+          console.warn('has_super_admin RPC failed:', error.message);
+          setSuperAdminExists(false);
+        } else {
+          setSuperAdminExists(data === true);
+        }
       } catch {
-        setSuperAdminExists(false);
+        if (!cancelled) setSuperAdminExists(false);
       } finally {
-        setChecking(false);
+        if (!cancelled) setChecking(false);
       }
     }
     checkSuperAdmin();
+    return () => { cancelled = true; };
   }, []);
 
   const handleSetup = useCallback(async () => {
@@ -52,25 +53,28 @@ export function AdminSetupScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const user = await service.signUpWithEmail(email, password, displayName || 'Admin');
       const supa = getSupabaseClient();
-      const { error: updateError } = await supa
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          display_name: displayName || 'Admin',
-          role: 'super_admin',
-          is_anonymous: false,
-        });
-      if (updateError) throw updateError;
+
+      const { data, error: signUpError } = await supa.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName || 'Admin',
+            role: 'super_admin',
+          },
+        },
+      });
+      if (signUpError) throw signUpError;
+      if (!data.user) throw new Error('Signup failed: no user returned');
+
       dispatch({ type: 'NAVIGATE', screen: 'home' });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('adminSetup.failed'));
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, displayName, service, dispatch, t]);
+  }, [email, password, displayName, dispatch, t]);
 
   if (checking) {
     return (
