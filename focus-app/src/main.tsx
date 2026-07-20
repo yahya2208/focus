@@ -2,10 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-console.log('[FOCUS] main.tsx executing');
-
 window.addEventListener('error', (event) => {
-  console.error('[FOCUS GLOBAL ERROR]', event.message, '\nSource:', event.filename, '\nLine:', event.lineno, 'Col:', event.colno, '\nError:', event.error);
+  console.error('[FOCUS ERROR]', event.message, event.error);
 });
 
 window.addEventListener('unhandledrejection', (event) => {

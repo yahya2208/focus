@@ -34,43 +34,23 @@ function mapToResearchRole(role: AuthUser['role']): ResearchRole {
   }
 }
 
-function logAuth(phase: string, detail?: string) {
-  console.log(`[AuthProvider] ${phase}`, detail ?? '');
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  logAuth('render start');
   const [service, setService] = useState<AuthService>(STUB_SERVICE);
   const [state, setState] = useState<AuthState>(STUB_SERVICE.getState);
   const initRef = useRef(false);
 
   useEffect(() => {
-    logAuth('useEffect fired');
-    if (initRef.current) {
-      logAuth('already initialized, skipping');
-      return;
-    }
+    if (initRef.current) return;
     initRef.current = true;
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    logAuth('env check', `URL=${supabaseUrl ? 'SET (' + supabaseUrl.substring(0, 30) + '...)' : 'EMPTY'} KEY=${supabaseKey ? 'SET' : 'EMPTY'}`);
-
     try {
-      logAuth('calling createAuthService()...');
       const s = createAuthService();
-      logAuth('createAuthService() succeeded');
       setService(s);
       setState(s.getState());
-      logAuth('subscribing to onStateChange...');
-      const unsub = s.onStateChange((newState) => {
-        logAuth('state change', `status=${newState.status} user=${newState.user?.id ?? 'null'}`);
+      return s.onStateChange((newState) => {
         setState(newState);
       });
-      logAuth('AuthProvider initialized successfully');
-      return unsub;
-    } catch (err) {
-      logAuth('createAuthService() FAILED', err instanceof Error ? err.message : String(err));
+    } catch {
       // Stay with stub — no crash
     }
   }, []);
@@ -85,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [state, service, researchRole],
   );
 
-  logAuth('render end', `status=${state.status}`);
   return (
     <AuthContext.Provider value={value}>
       {children}

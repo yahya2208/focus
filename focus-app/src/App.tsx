@@ -30,6 +30,7 @@ import { AccessDeniedScreen } from './screens/auth/AccessDeniedScreen';
 import type { ScreenName } from './store/navigation';
 import { useThemeColors } from './hooks/useThemeColors';
 import { parseDeepLinkFromCurrentUrl } from './core/qr/deeplink';
+import { hasCampaign } from './core/qr/campaign';
 
 const screens: Record<ScreenName, React.FC> = {
   home: HomeScreen,
@@ -75,7 +76,7 @@ function InitialRoute() {
   useEffect(() => {
     if (currentScreen !== 'home') return;
     const deepLink = parseDeepLinkFromCurrentUrl();
-    if (deepLink) {
+    if (deepLink.isValid && (hasCampaign(deepLink.campaign) || deepLink.referralCode)) {
       dispatch({ type: 'NAVIGATE', screen: 'landing' });
     }
   }, [currentScreen, dispatch]);
@@ -85,7 +86,6 @@ function InitialRoute() {
 
 function ScreenRouter() {
   const { currentScreen } = useAppState();
-  console.log(`[ScreenRouter] Rendering screen: "${currentScreen}"`);
 
   if (currentScreen === 'research') {
     return (
@@ -96,10 +96,6 @@ function ScreenRouter() {
   }
 
   const Screen = screens[currentScreen];
-  if (!Screen) {
-    console.error(`[ScreenRouter] No screen found for: "${currentScreen}"`);
-    return <div>Unknown screen: {currentScreen}</div>;
-  }
   return <Screen />;
 }
 

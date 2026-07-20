@@ -46,23 +46,18 @@ function mapUser(supaUser: User | null): AuthUser | null {
 
 
 export function createAuthService(client?: SupabaseClient): AuthService {
-  console.log('[AuthService] createAuthService called, client provided:', !!client);
   const supa = client ?? getSupabaseClient();
-  console.log('[AuthService] Supabase client obtained, setting up auth state');
   let state: AuthState = { status: 'loading', user: null, error: null };
   const listeners = new Set<AuthStateChangeHandler>();
 
   function setState(patch: Partial<AuthState>) {
     state = { ...state, ...patch };
-    console.log('[AuthService] State changed →', state.status, state.user?.id ?? 'no user');
     for (const handler of listeners) {
-      try { handler(state); } catch (e) { console.error('[AuthService] Listener threw:', e); }
+      try { handler(state); } catch { /* ignore */ }
     }
   }
 
-  console.log('[AuthService] Calling supa.auth.onAuthStateChange...');
-  const { data } = supa.auth.onAuthStateChange((_event, session) => {
-    console.log('[AuthService] onAuthStateChange fired, event has session:', !!session);
+  supa.auth.onAuthStateChange((_event, session) => {
     if (session?.user) {
       const user = mapUser(session.user);
       setState({
@@ -74,7 +69,6 @@ export function createAuthService(client?: SupabaseClient): AuthService {
       setState({ status: 'unauthenticated', user: null, error: null });
     }
   });
-  console.log('[AuthService] onAuthStateChange registered, subscription:', !!data?.subscription);
 
   return {
     getState(): AuthState {

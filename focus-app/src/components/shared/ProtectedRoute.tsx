@@ -30,10 +30,8 @@ export function ProtectedRoute({
   requiredAction = 'read',
 }: ProtectedRouteProps) {
   const { state, researchRole } = useAuth();
-  console.log('[ProtectedRoute] auth status:', state.status, 'role:', state.user?.role ?? 'none', 'requiredRole:', requiredRole ?? 'any');
 
   if (requireAuth && state.status !== 'authenticated' && state.status !== 'anonymous') {
-    console.log('[ProtectedRoute] → Not authenticated, showing LoginScreen');
     return <LoginScreen />;
   }
 
