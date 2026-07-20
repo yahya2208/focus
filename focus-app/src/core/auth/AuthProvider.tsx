@@ -11,6 +11,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const STUB_SERVICE: AuthService = {
+  getState: () => ({ status: 'unauthenticated', user: null, error: null }),
+  onStateChange: () => () => {},
+  signInAsGuest: async () => { throw new Error('Supabase not configured'); },
+  signInWithEmail: async () => { throw new Error('Supabase not configured'); },
+  signUpWithEmail: async () => { throw new Error('Supabase not configured'); },
+  signInWithMagicLink: async () => { throw new Error('Supabase not configured'); },
+  convertGuestToUser: async () => { throw new Error('Supabase not configured'); },
+  signOut: async () => { throw new Error('Supabase not configured'); },
+  getCurrentUser: () => null,
+};
+
 function mapToResearchRole(role: AuthUser['role']): ResearchRole {
   switch (role) {
     case 'super_admin': return 'super_admin';
@@ -22,36 +34,24 @@ function mapToResearchRole(role: AuthUser['role']): ResearchRole {
   }
 }
 
-function getAuthService(): AuthService {
-  try {
-    return createAuthService();
-  } catch {
-    return {
-      getState: () => ({ status: 'unauthenticated', user: null, error: null }),
-      onStateChange: () => () => {},
-      signInAsGuest: async () => { throw new Error('Supabase not configured'); },
-      signInWithEmail: async () => { throw new Error('Supabase not configured'); },
-      signUpWithEmail: async () => { throw new Error('Supabase not configured'); },
-      signInWithMagicLink: async () => { throw new Error('Supabase not configured'); },
-      convertGuestToUser: async () => { throw new Error('Supabase not configured'); },
-      signOut: async () => { throw new Error('Supabase not configured'); },
-      getCurrentUser: () => null,
-    };
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const serviceRef = useRef<AuthService | null>(null);
-  if (!serviceRef.current) {
-    serviceRef.current = getAuthService();
-  }
-  const service = serviceRef.current;
-
-  const [state, setState] = useState<AuthState>(service.getState);
+  const [service, setService] = useState<AuthService>(STUB_SERVICE);
+  const [state, setState] = useState<AuthState>(STUB_SERVICE.getState);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    return service.onStateChange(setState);
-  }, [service]);
+    if (initRef.current) return;
+    initRef.current = true;
+    try {
+      const s = createAuthService();
+      setService(s);
+      setState(s.getState());
+      const unsub = s.onStateChange(setState);
+      return unsub;
+    } catch {
+      // Supabase not configured — stay with stub
+    }
+  }, []);
 
   const researchRole = useMemo(
     () => state.user ? mapToResearchRole(state.user.role) : 'none',

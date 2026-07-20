@@ -109,23 +109,12 @@ export function SettingsScreen() {
         </Card>
       )}
 
-      {isAdmin && (
-        <Card style={{ marginBottom: '1rem' }}>
-          <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('settings.administration')}</h2>
-          <Button variant="secondary" onClick={() => navDispatch({ type: 'NAVIGATE', screen: 'admin-setup' })} style={{ width: '100%' }}>
-            {t('settings.adminSetup')}
-          </Button>
-        </Card>
-      )}
-
-      {!isAdmin && (
-        <Card style={{ marginBottom: '1rem' }}>
-          <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('settings.administration')}</h2>
-          <Button variant="secondary" onClick={() => navDispatch({ type: 'NAVIGATE', screen: 'admin-setup' })} style={{ width: '100%' }}>
-            {t('settings.adminSetup')}
-          </Button>
-        </Card>
-      )}
+      <Card style={{ marginBottom: '1rem' }}>
+        <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('settings.administration')}</h2>
+        <Button variant="secondary" onClick={() => navDispatch({ type: 'NAVIGATE', screen: 'admin-setup' })} style={{ width: '100%' }}>
+          {t('settings.adminSetup')}
+        </Button>
+      </Card>
 
       <Button variant="secondary" onClick={() => navDispatch({ type: 'NAVIGATE', screen: 'home' })} style={{ marginTop: '1rem' }}>
         {t('settings.back')}
