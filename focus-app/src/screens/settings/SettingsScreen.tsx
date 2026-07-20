@@ -7,11 +7,13 @@ import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 
 export function SettingsScreen() {
+  console.log('[SettingsScreen] Rendering');
   const navDispatch = useAppDispatch();
   const { settings, update } = useSettingsContext();
   const { state, service } = useAuth();
   const { t } = useTranslation();
   const colors = useThemeColors();
+  console.log('[SettingsScreen] Auth state:', state.status, 'user:', state.user?.id ?? 'null');
 
   const isAuthenticated = state.status === 'authenticated' || state.status === 'anonymous';
   const isAdmin = state.user?.role === 'admin' || state.user?.role === 'super_admin';

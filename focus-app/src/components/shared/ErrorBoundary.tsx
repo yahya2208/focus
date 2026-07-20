@@ -21,7 +21,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('FOCUS ErrorBoundary caught:', error, errorInfo);
+    console.error('═══════════════════════════════════════');
+    console.error('FOCUS ERROR BOUNDARY CAUGHT AN ERROR');
+    console.error('═══════════════════════════════════════');
+    console.error('Error message:', error.message);
+    console.error('Error name:', error.name);
+    console.error('Error stack:', error.stack);
+    console.error('Component stack:', errorInfo.componentStack);
+    console.error('═══════════════════════════════════════');
   }
 
   render() {
@@ -44,9 +51,12 @@ export class ErrorBoundary extends Component<Props, State> {
             }}
           >
             <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Something went wrong</h1>
-            <p style={{ color: '#888', marginBottom: '2rem' }}>
+            <p style={{ color: '#888', marginBottom: '1rem', fontSize: '0.85rem', maxWidth: '500px', wordBreak: 'break-all' }}>
               {this.state.error?.message ?? 'An unexpected error occurred.'}
             </p>
+            <pre style={{ color: '#666', fontSize: '0.7rem', marginBottom: '2rem', maxWidth: '500px', overflow: 'auto', textAlign: 'left' }}>
+              {this.state.error?.stack}
+            </pre>
             <button
               onClick={() => window.location.reload()}
               style={{

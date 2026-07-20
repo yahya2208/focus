@@ -85,6 +85,7 @@ function InitialRoute() {
 
 function ScreenRouter() {
   const { currentScreen } = useAppState();
+  console.log(`[ScreenRouter] Rendering screen: "${currentScreen}"`);
 
   if (currentScreen === 'research') {
     return (
@@ -95,6 +96,10 @@ function ScreenRouter() {
   }
 
   const Screen = screens[currentScreen];
+  if (!Screen) {
+    console.error(`[ScreenRouter] No screen found for: "${currentScreen}"`);
+    return <div>Unknown screen: {currentScreen}</div>;
+  }
   return <Screen />;
 }
 

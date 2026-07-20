@@ -19,11 +19,17 @@ export function getSupabaseConfig(): SupabaseConfig {
 }
 
 export function initSupabase(config?: SupabaseConfig): SupabaseClient {
-  if (clientInstance) return clientInstance;
+  if (clientInstance) {
+    console.log('[Supabase] Returning existing client instance');
+    return clientInstance;
+  }
   const c = config ?? getSupabaseConfig();
+  console.log('[Supabase] initSupabase called, URL:', c.url ? c.url.substring(0, 40) + '...' : 'EMPTY', 'Key:', c.anonKey ? c.anonKey.substring(0, 10) + '...' : 'EMPTY');
   if (!c.url || !c.anonKey) {
+    console.error('[Supabase] MISSING URL or ANON_KEY — throwing');
     throw new Error('Supabase URL and anon key are required');
   }
+  console.log('[Supabase] Creating Supabase client...');
   clientInstance = createClient(c.url, c.anonKey, {
     auth: {
       persistSession: true,
@@ -31,6 +37,7 @@ export function initSupabase(config?: SupabaseConfig): SupabaseClient {
       detectSessionInUrl: true,
     },
   });
+  console.log('[Supabase] Client created successfully');
   return clientInstance;
 }
 
