@@ -41,12 +41,14 @@ const en = {
 
   // Game
   'game.waiting': 'Wait...',
-  'game.ready': 'Wait for green...',
-  'game.stimulus': 'TAP NOW!',
+  'game.ready': 'Watch for the lamp...',
+  'game.stimulus': 'Tap the lamp!',
   'game.responded': 'Good!',
   'game.tooEarly': 'Too early!',
   'game.round': 'Round',
   'game.of': '/',
+  'game.bestTime': 'Best',
+  'game.missed': 'Missed! Tap the lamp',
 
   // Results
   'results.title': 'Results',

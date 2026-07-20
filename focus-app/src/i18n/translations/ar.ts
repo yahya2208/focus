@@ -36,12 +36,14 @@ const ar: Record<TranslationKey, string> = {
   'countdown.getReady': 'استعد...',
 
   'game.waiting': 'انتظر...',
-  'game.ready': 'انتظر اللون الأخضر...',
-  'game.stimulus': 'اضغط الآن!',
+  'game.ready': 'راقب المصباح...',
+  'game.stimulus': 'اضغط على المصباح!',
   'game.responded': 'جيد!',
   'game.tooEarly': 'مبكر جداً!',
   'game.round': 'جولة',
   'game.of': '/',
+  'game.bestTime': 'الأفضل',
+  'game.missed': 'فاتك! اضغط على المصباح',
 
   'results.title': 'النتائج',
   'results.focusScore': 'درجة التركيز',

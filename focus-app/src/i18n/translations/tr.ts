@@ -36,12 +36,14 @@ const tr: Record<TranslationKey, string> = {
   'countdown.getReady': 'Hazır olun...',
 
   'game.waiting': 'Bekleyin...',
-  'game.ready': 'Yeşil için bekleyin...',
-  'game.stimulus': 'ŞİMDİ DOKUNUN!',
+  'game.ready': 'Lamba için izleyin...',
+  'game.stimulus': 'Lambaya dokunun!',
   'game.responded': 'İyi!',
   'game.tooEarly': 'Çok erken!',
   'game.round': 'Tur',
   'game.of': '/',
+  'game.bestTime': 'En iyi',
+  'game.missed': 'Kaçırdınız! Lambaya dokunun',
 
   'results.title': 'Sonuçlar',
   'results.focusScore': 'Odak Puanı',
