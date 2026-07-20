@@ -42,6 +42,7 @@ function playBreakSound() {
 const KEYFRAMES_CSS = `
 @keyframes lampGlowIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes lampBreak{0%{transform:scale(1);opacity:1;filter:brightness(1)}30%{transform:scale(1.4);opacity:1;filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(0.5)}}
+@keyframes glassCrack{0%{opacity:0;transform:scale(0.5)}20%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
 @keyframes rtPop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 @keyframes missFlash{0%{opacity:0}20%{opacity:.15}100%{opacity:0}}
 `;
@@ -168,36 +169,53 @@ export function GameScreen() {
           contain: 'strict',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0,
-            padding: '1rem 1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            zIndex: 10,
-            contain: 'layout style',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '0.7rem', color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+        {/* HUD */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0,
+          padding: '1rem 1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 10,
+          contain: 'layout style',
+        }}>
+          <div style={{
+            background: colors.glass,
+            border: `1px solid ${colors.glassBorder}`,
+            borderRadius: '12px',
+            padding: '0.5rem 0.75rem',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <span style={{ fontSize: '0.6rem', color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
               {t('game.bestTime')}
             </span>
-            <span style={{ fontSize: '1.3rem', fontWeight: 700, color: colors.accent, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.accent, fontVariantNumeric: 'tabular-nums', display: 'block' }}>
               {bestTime !== null ? `${Math.round(bestTime)}ms` : '---'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-            <span style={{ fontSize: '0.7rem', color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
-              {t('game.round')} {Math.min(round + 1, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
+
+          <div style={{
+            background: colors.glass,
+            border: `1px solid ${colors.glassBorder}`,
+            borderRadius: '12px',
+            padding: '0.5rem 0.75rem',
+            textAlign: 'right',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <span style={{ fontSize: '0.6rem', color: colors.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+              {t('game.round')}
             </span>
-            <div style={{ width: '80px', height: '4px', background: colors.progressBg, borderRadius: '2px', overflow: 'hidden' }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.text, fontVariantNumeric: 'tabular-nums', display: 'block' }}>
+              {Math.min(round + 1, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
+            </span>
+            <div style={{ width: '70px', height: '3px', background: colors.progressBg, borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
               <div style={{ width: `${progress}%`, height: '100%', background: colors.accent, borderRadius: '2px', transition: 'width 0.3s' }} />
             </div>
           </div>
         </div>
 
+        {/* Last RT popup */}
         {lastRt !== null && (
           <div
             key={`rt-${hudTick}`}
@@ -206,14 +224,20 @@ export function GameScreen() {
               transform: 'translate(-50%, -50%)',
               zIndex: 20, pointerEvents: 'none',
               animation: 'rtPop 0.3s ease-out',
+              background: colors.glass,
+              border: `1px solid ${colors.glassBorder}`,
+              borderRadius: '16px',
+              padding: '0.75rem 1.25rem',
+              backdropFilter: 'blur(8px)',
             }}
           >
-            <span style={{ fontSize: '2.5rem', fontWeight: 800, color: colors.success, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: colors.success, fontVariantNumeric: 'tabular-nums' }}>
               {Math.round(lastRt)}ms
             </span>
           </div>
         )}
 
+        {/* LED Lamp */}
         {phase === 'visible' && (
           <button
             aria-label="Tap the lamp"
@@ -229,11 +253,12 @@ export function GameScreen() {
               touchAction: 'manipulation',
               animation: 'lampGlowIn 0.25s ease-out forwards',
               background: `radial-gradient(circle,${colors.warning} 0%,${colors.warning}dd 50%,${colors.warning}88 100%)`,
-              boxShadow: `0 0 20px ${colors.warning}88,0 0 40px ${colors.warning}44,0 0 60px ${colors.warning}22`,
+              boxShadow: `0 0 20px ${colors.warning}88, 0 0 40px ${colors.warning}44, 0 0 60px ${colors.warning}22, inset 0 0 12px ${colors.warning}aa`,
             }}
           />
         )}
 
+        {/* Glass crack on hit */}
         {phase === 'hit' && (
           <div
             key={`break-${hudTick}`}
@@ -241,34 +266,76 @@ export function GameScreen() {
               position: 'absolute',
               left: `${lp.x}%`, top: `${lp.y}%`,
               transform: 'translate(-50%, -50%)',
-              width: LAMP_SIZE, height: LAMP_SIZE,
-              borderRadius: '50%', zIndex: 5, pointerEvents: 'none',
-              animation: 'lampBreak 0.5s ease-out forwards',
-              background: `radial-gradient(circle,${colors.success} 0%,${colors.success}88 60%,transparent 100%)`,
-              boxShadow: `0 0 30px ${colors.success}66`,
+              width: LAMP_SIZE * 2, height: LAMP_SIZE * 2,
+              zIndex: 5, pointerEvents: 'none',
+              animation: 'glassCrack 0.4s ease-out forwards',
             }}
-          />
+          >
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+              <circle cx="50" cy="50" r="24" fill="none" stroke={colors.success} strokeWidth="1.5" opacity="0.6" />
+              <line x1="50" y1="26" x2="50" y2="10" stroke={colors.success} strokeWidth="1" opacity="0.5" />
+              <line x1="50" y1="74" x2="50" y2="90" stroke={colors.success} strokeWidth="1" opacity="0.5" />
+              <line x1="26" y1="50" x2="10" y2="50" stroke={colors.success} strokeWidth="1" opacity="0.5" />
+              <line x1="74" y1="50" x2="90" y2="50" stroke={colors.success} strokeWidth="1" opacity="0.5" />
+              <line x1="33" y1="33" x2="20" y2="20" stroke={colors.success} strokeWidth="0.8" opacity="0.4" />
+              <line x1="67" y1="33" x2="80" y2="20" stroke={colors.success} strokeWidth="0.8" opacity="0.4" />
+              <line x1="33" y1="67" x2="20" y2="80" stroke={colors.success} strokeWidth="0.8" opacity="0.4" />
+              <line x1="67" y1="67" x2="80" y2="80" stroke={colors.success} strokeWidth="0.8" opacity="0.4" />
+            </svg>
+          </div>
         )}
 
-        <div
-          style={{
-            position: 'absolute', bottom: '2rem', left: 0, right: 0,
-            textAlign: 'center', zIndex: 10,
-          }}
-        >
+        {/* Miss flash */}
+        {phase === 'miss' && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: colors.danger,
+            animation: 'missFlash 0.4s ease-out forwards',
+            pointerEvents: 'none', zIndex: 3,
+          }} />
+        )}
+
+        {/* Bottom instruction */}
+        <div style={{
+          position: 'absolute', bottom: '2rem', left: 0, right: 0,
+          textAlign: 'center', zIndex: 10,
+        }}>
           {phase === 'waiting' && (
-            <p style={{ color: colors.textMuted, fontSize: '0.9rem' }}>{t('game.ready')}</p>
+            <div style={{
+              display: 'inline-block',
+              background: colors.glass,
+              border: `1px solid ${colors.glassBorder}`,
+              borderRadius: '12px',
+              padding: '0.5rem 1.25rem',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', margin: 0 }}>{t('game.ready')}</p>
+            </div>
           )}
           {phase === 'visible' && (
-            <p style={{ color: colors.warning, fontSize: '0.9rem', fontWeight: 600 }}>{t('game.stimulus')}</p>
+            <div style={{
+              display: 'inline-block',
+              background: `${colors.warning}18`,
+              border: `1px solid ${colors.warning}44`,
+              borderRadius: '12px',
+              padding: '0.5rem 1.25rem',
+            }}>
+              <p style={{ color: colors.warning, fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{t('game.stimulus')}</p>
+            </div>
           )}
           {phase === 'miss' && (
-            <p style={{ color: colors.danger, fontSize: '0.9rem', fontWeight: 600 }}>{t('game.missed')}</p>
+            <div style={{
+              display: 'inline-block',
+              background: `${colors.danger}18`,
+              border: `1px solid ${colors.danger}44`,
+              borderRadius: '12px',
+              padding: '0.5rem 1.25rem',
+            }}>
+              <p style={{ color: colors.danger, fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{t('game.missed')}</p>
+            </div>
           )}
         </div>
       </nav>
     </>
   );
 }
-
-

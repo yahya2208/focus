@@ -5,11 +5,19 @@ const ar: Record<TranslationKey, string> = {
   'app.subtitle': 'منصة القياس المعرفي',
   'app.version': 'FOCUS v0.1.0-alpha',
 
-  'home.startMeasurement': 'ابدأ القياس',
-  'home.sessionHistory': 'سجل الجلسات',
+  'home.greeting.morning': 'صباح الخير',
+  'home.greeting.afternoon': 'مساء الخير',
+  'home.greeting.evening': 'مساء الخير',
+  'home.todayFocus': 'تركيز اليوم',
+  'home.focusDescription': 'نتيجة الأداء المعرفي بناءً على الجلسات الأخيرة',
+  'home.aiAdviceTitle': 'تحتاج نصيحة؟',
+  'home.aiAdviceSubtitle': 'اسأل مدربك الذكي أي شيء',
+  'home.startMeasurement': 'ابدأ التقييم',
+  'home.sessionHistory': 'السجل',
   'home.settings': 'الإعدادات',
   'home.about': 'حول',
   'home.aiCoach': 'المدرب الذكي',
+  'home.phoneServices': 'خدمات الهاتف',
   'home.researchConsole': 'لوحة البحث',
 
   'library.title': 'مكتبة الألعاب',
@@ -34,6 +42,7 @@ const ar: Record<TranslationKey, string> = {
   'calibration.samples': 'عينات',
 
   'countdown.getReady': 'استعد...',
+  'countdown.go': 'انطلق!',
 
   'game.waiting': 'انتظر...',
   'game.ready': 'راقب المصباح...',
@@ -44,8 +53,12 @@ const ar: Record<TranslationKey, string> = {
   'game.of': '/',
   'game.bestTime': 'الأفضل',
   'game.missed': 'فاتك! اضغط على المصباح',
+  'game.lampInstruction': 'عندما يضيء المصباح، اضغط عليه بأسرع ما يمكن',
 
   'results.title': 'النتائج',
+  'results.best': 'الأفضل',
+  'results.average': 'المتوسط',
+  'results.score': 'النتيجة',
   'results.focusScore': 'درجة التركيز',
   'results.grade': 'التقدير',
   'results.reactionTimes': 'أوقات الاستجابة',
@@ -97,14 +110,17 @@ const ar: Record<TranslationKey, string> = {
   'about.privacyDescription': 'جميع البيانات محفوظة محلياً على جهازك. لا يتم إرسال أي بيانات إلى خوادم خارجية.',
   'about.back': 'رجوع',
 
-  'landing.title': 'اختبر تركيزك في أقل من دقيقة',
-  'landing.subtitle': 'اكتشف سرعة انتباهك بدقة علمية، مجاناً.',
-  'landing.startNow': 'ابدأ الآن',
+  'landing.title': 'FOCUS',
+  'landing.subtitle': 'قِس أداءك المعرفي',
+  'landing.startNow': 'ابدأ التقييم',
   'landing.howItWorks': 'كيف يعمل؟',
   'landing.scientificAccuracy': 'دقة علمية',
   'landing.privacyProtected': 'خصوصيتك محمية',
   'landing.noDownload': 'يعمل فوراً بدون تحميل',
   'landing.pwa': 'PWA - يمكن تثبيته',
+  'landing.heroTagline': 'اكتشف سرعة استجابتك',
+  'landing.heroDescription': 'هذا التقييم يستغرق أقل من 60 ثانية.',
+  'landing.testsCompleted': 'أكثر من 250,000 اختبار مكتمل',
 
   'share.title': 'تحدَّ صديقك',
   'share.subtitle': 'شارك تجربتك واختبر تركيز أصدقائك',
@@ -229,9 +245,6 @@ const ar: Record<TranslationKey, string> = {
   'settings.signOut': 'تسجيل الخروج',
   'settings.administration': 'الإدارة',
   'settings.adminSetup': 'إعداد المدير',
-
-  // Home
-  'home.phoneServices': 'خدمات الهاتف',
 
   // Phone Services
   'phoneServices.title': 'خدمات الهاتف',

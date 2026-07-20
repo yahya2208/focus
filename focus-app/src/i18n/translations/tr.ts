@@ -5,11 +5,19 @@ const tr: Record<TranslationKey, string> = {
   'app.subtitle': 'Bilişsel Ölçüm Platformu',
   'app.version': 'FOCUS v0.1.0-alpha',
 
-  'home.startMeasurement': 'Ölçüme Başla',
-  'home.sessionHistory': 'Oturum Geçmişi',
+  'home.greeting.morning': 'Günaydın',
+  'home.greeting.afternoon': 'İyi günler',
+  'home.greeting.evening': 'İyi akşamlar',
+  'home.todayFocus': 'Bugünkü Odak',
+  'home.focusDescription': 'Son oturumlarınıza göre bilişsel performans puanınız',
+  'home.aiAdviceTitle': 'Tavsiye mi lazım?',
+  'home.aiAdviceSubtitle': 'Yapay zeka koçunuza sorun',
+  'home.startMeasurement': 'Değerlendirmeye Başla',
+  'home.sessionHistory': 'Geçmiş',
   'home.settings': 'Ayarlar',
   'home.about': 'Hakkında',
   'home.aiCoach': 'Yapay Zeka Koçu',
+  'home.phoneServices': 'Telefon Hizmetleri',
   'home.researchConsole': 'Araştırma Konsolu',
 
   'library.title': 'Oyun Kütüphanesi',
@@ -34,6 +42,7 @@ const tr: Record<TranslationKey, string> = {
   'calibration.samples': 'örnek',
 
   'countdown.getReady': 'Hazır olun...',
+  'countdown.go': 'Başla!',
 
   'game.waiting': 'Bekleyin...',
   'game.ready': 'Lamba için izleyin...',
@@ -44,8 +53,12 @@ const tr: Record<TranslationKey, string> = {
   'game.of': '/',
   'game.bestTime': 'En iyi',
   'game.missed': 'Kaçırdınız! Lambaya dokunun',
+  'game.lampInstruction': 'Lamba yandığında mümkün olduğunca hızlı dokunun',
 
   'results.title': 'Sonuçlar',
+  'results.best': 'En İyi',
+  'results.average': 'Ortalama',
+  'results.score': 'Puan',
   'results.focusScore': 'Odak Puanı',
   'results.grade': 'Not',
   'results.reactionTimes': 'Reaksiyon Süreleri',
@@ -97,14 +110,17 @@ const tr: Record<TranslationKey, string> = {
   'about.privacyDescription': 'Tüm veriler cihazınızda yerel olarak saklanır. Dış sunuculara veri aktarımı yapılmaz.',
   'about.back': 'Geri',
 
-  'landing.title': 'Odaklanmanızı bir dakikadan kısa sürede test edin',
-  'landing.subtitle': 'Dikkat hızınızı bilimsel doğrulukla keşfedin, ücretsiz.',
-  'landing.startNow': 'Şimdi Başla',
+  'landing.title': 'FOCUS',
+  'landing.subtitle': 'Bilişsel performansınızı ölçün',
+  'landing.startNow': 'Değerlendirmeye Başla',
   'landing.howItWorks': 'Nasıl çalışır?',
   'landing.scientificAccuracy': 'Bilimsel doğruluk',
   'landing.privacyProtected': 'Gizliliğiniz korunur',
   'landing.noDownload': 'İndirme yapmadan anında çalışır',
   'landing.pwa': 'PWA - Yüklenebilir',
+  'landing.heroTagline': 'Reaksiyon hızınızı keşfedin',
+  'landing.heroDescription': 'Bu değerlendirme 60 saniyeden kısa sürer.',
+  'landing.testsCompleted': '250.000+ test tamamlandı',
 
   'share.title': 'Arkadaşına Meydan Oku',
   'share.subtitle': 'Deneyiminizi paylaşın ve arkadaşlarınızın odaklanmasını test edin',
@@ -229,9 +245,6 @@ const tr: Record<TranslationKey, string> = {
   'settings.signOut': 'Çıkış Yap',
   'settings.administration': 'Yönetim',
   'settings.adminSetup': 'Yönetici Ayarları',
-
-  // Home
-  'home.phoneServices': 'Telefon Hizmetleri',
 
   // Phone Services
   'phoneServices.title': 'Telefon Hizmetleri',

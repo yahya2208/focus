@@ -5,11 +5,19 @@ const en = {
   'app.version': 'FOCUS v0.1.0-alpha',
 
   // Home
-  'home.startMeasurement': 'Start Measurement',
-  'home.sessionHistory': 'Session History',
+  'home.greeting.morning': 'Good morning',
+  'home.greeting.afternoon': 'Good afternoon',
+  'home.greeting.evening': 'Good evening',
+  'home.todayFocus': "Today's Focus",
+  'home.focusDescription': 'Your cognitive performance score based on recent sessions',
+  'home.aiAdviceTitle': 'Need advice?',
+  'home.aiAdviceSubtitle': 'Ask your AI coach anything',
+  'home.startMeasurement': 'Start Assessment',
+  'home.sessionHistory': 'History',
   'home.settings': 'Settings',
   'home.about': 'About',
   'home.aiCoach': 'AI Coach',
+  'home.phoneServices': 'Phone Services',
   'home.researchConsole': 'Research Console',
 
   // Library
@@ -38,6 +46,7 @@ const en = {
 
   // Countdown
   'countdown.getReady': 'Get ready...',
+  'countdown.go': 'Go!',
 
   // Game
   'game.waiting': 'Wait...',
@@ -49,9 +58,13 @@ const en = {
   'game.of': '/',
   'game.bestTime': 'Best',
   'game.missed': 'Missed! Tap the lamp',
+  'game.lampInstruction': 'When the lamp lights up, tap it as fast as you can',
 
   // Results
   'results.title': 'Results',
+  'results.best': 'Best',
+  'results.average': 'Average',
+  'results.score': 'Score',
   'results.focusScore': 'Focus Score',
   'results.grade': 'Grade',
   'results.reactionTimes': 'Reaction Times',
@@ -107,14 +120,17 @@ const en = {
   'about.back': 'Back',
 
   // Landing
-  'landing.title': 'Test your focus in under a minute',
-  'landing.subtitle': 'Discover your attention speed with scientific accuracy, for free.',
-  'landing.startNow': 'Start Now',
+  'landing.title': 'FOCUS',
+  'landing.subtitle': 'Measure your cognitive performance',
+  'landing.startNow': 'Start Assessment',
   'landing.howItWorks': 'How it works?',
   'landing.scientificAccuracy': 'Scientific accuracy',
   'landing.privacyProtected': 'Your privacy is protected',
   'landing.noDownload': 'Works instantly without download',
   'landing.pwa': 'PWA - Can be installed',
+  'landing.heroTagline': 'Discover your reaction speed',
+  'landing.heroDescription': 'This assessment takes less than 60 seconds.',
+  'landing.testsCompleted': '250,000+ tests completed',
 
   // Share
   'share.title': 'Challenge a Friend',
@@ -249,9 +265,6 @@ const en = {
   'settings.signOut': 'Sign Out',
   'settings.administration': 'Administration',
   'settings.adminSetup': 'Admin Setup',
-
-  // Home
-  'home.phoneServices': 'Phone Services',
 
   // Phone Services
   'phoneServices.title': 'Phone Services',

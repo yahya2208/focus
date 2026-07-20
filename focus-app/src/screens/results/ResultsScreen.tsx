@@ -38,17 +38,27 @@ export function ResultsScreen() {
     );
   }
 
+  const bestRt = Math.min(...results.correctedRts);
+  const avgRt = results.correctedRts.reduce((a, b) => a + b, 0) / results.correctedRts.length;
+
   const saveAndExit = () => {
     dispatch({ type: 'SAVE_SESSION' });
     dispatch({ type: 'NAVIGATE', screen: 'home' });
   };
 
   return (
-    <nav aria-label="Measurement results" style={{ padding: '2rem', maxWidth: '480px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, marginBottom: '1.5rem', textAlign: 'center' }}>
-        {t('results.title')}
-      </h1>
-      <Card style={{ marginBottom: '1rem', textAlign: 'center' }}>
+    <nav aria-label="Measurement results" style={{ padding: '2rem 1.5rem', maxWidth: '480px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, marginBottom: '0.25rem' }}>
+          {t('results.title')}
+        </h1>
+        <p style={{ color: colors.textMuted, fontSize: '0.85rem' }}>
+          {results.validRounds}/{results.totalRounds} {t('game.of')} {results.totalRounds}
+        </p>
+      </div>
+
+      {/* Score ring */}
+      <Card style={{ marginBottom: '1.25rem', textAlign: 'center', background: colors.gradient, border: `1px solid ${colors.glassBorder}` }}>
         <ProgressRing
           value={analysis.score.focusScore}
           max={100}
@@ -59,32 +69,58 @@ export function ResultsScreen() {
           {t('results.grade')}: <strong style={{ color: colors.text }}>{analysis.score.grade}</strong>
         </p>
       </Card>
-      <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('results.reactionTimes')}</h2>
+
+      {/* Best / Average / Consistency cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '1.25rem' }}>
+        <Card padding="0.75rem" style={{ textAlign: 'center', background: colors.glass, border: `1px solid ${colors.glassBorder}` }}>
+          <p style={{ color: colors.textMuted, fontSize: '0.65rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.25rem' }}>
+            {t('results.best')}
+          </p>
+          <p style={{ color: colors.accent, fontSize: '1.25rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', margin: 0 }}>
+            {Math.round(bestRt)}ms
+          </p>
+        </Card>
+        <Card padding="0.75rem" style={{ textAlign: 'center', background: colors.glass, border: `1px solid ${colors.glassBorder}` }}>
+          <p style={{ color: colors.textMuted, fontSize: '0.65rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.25rem' }}>
+            {t('results.average')}
+          </p>
+          <p style={{ color: colors.text, fontSize: '1.25rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', margin: 0 }}>
+            {Math.round(avgRt)}ms
+          </p>
+        </Card>
+        <Card padding="0.75rem" style={{ textAlign: 'center', background: colors.glass, border: `1px solid ${colors.glassBorder}` }}>
+          <p style={{ color: colors.textMuted, fontSize: '0.65rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.25rem' }}>
+            {t('results.consistency')}
+          </p>
+          <p style={{ color: colors.success, fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+            {analysis.consistency.rating}
+          </p>
+        </Card>
+      </div>
+
+      {/* Detailed stats */}
+      <Card style={{ marginBottom: '1.25rem' }}>
+        <h2 style={{ color: colors.text, marginBottom: '0.75rem', fontSize: '0.9rem' }}>{t('results.reactionTimes')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', color: colors.textSecondary }}>
-          <p>{t('results.mean')}: <strong style={{ color: colors.text }}>{analysis.consistency.meanMs.toFixed(0)}ms</strong></p>
-          <p>{t('results.sd')}: <strong style={{ color: colors.text }}>{analysis.consistency.sdMs.toFixed(1)}ms</strong></p>
-          <p>{t('results.cv')}: <strong style={{ color: colors.text }}>{(analysis.consistency.cv * 100).toFixed(1)}%</strong></p>
-          <p>{t('results.iqr')}: <strong style={{ color: colors.text }}>{analysis.consistency.iqrMs.toFixed(1)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.mean')}: <strong style={{ color: colors.text }}>{analysis.consistency.meanMs.toFixed(0)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.sd')}: <strong style={{ color: colors.text }}>{analysis.consistency.sdMs.toFixed(1)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.cv')}: <strong style={{ color: colors.text }}>{(analysis.consistency.cv * 100).toFixed(1)}%</strong></p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.iqr')}: <strong style={{ color: colors.text }}>{analysis.consistency.iqrMs.toFixed(1)}ms</strong></p>
         </div>
       </Card>
-      <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('results.consistency')}</h2>
+
+      <Card style={{ marginBottom: '1.25rem' }}>
+        <h2 style={{ color: colors.text, marginBottom: '0.75rem', fontSize: '0.9rem' }}>{t('results.fatigue')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', color: colors.textSecondary }}>
-          <p>{t('results.outliers')}: <strong style={{ color: colors.text }}>{analysis.consistency.outlierCount}</strong></p>
-          <p>{t('results.rating')}: <strong style={{ color: colors.text }}>{analysis.consistency.rating}</strong></p>
-        </div>
-      </Card>
-      <Card style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: colors.text, marginBottom: '0.75rem' }}>{t('results.fatigue')}</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', color: colors.textSecondary }}>
-          <p>{t('results.slope')}: <strong style={{ color: colors.text }}>{analysis.fatigue.slope.toFixed(4)}</strong></p>
-          <p>{t('results.detected')}: <strong style={{ color: analysis.fatigue.hasFatigue ? colors.danger : colors.success }}>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.slope')}: <strong style={{ color: colors.text }}>{analysis.fatigue.slope.toFixed(4)}</strong></p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.detected')}: <strong style={{ color: analysis.fatigue.hasFatigue ? colors.danger : colors.success }}>
             {analysis.fatigue.hasFatigue ? t('results.yes') : t('results.no')}
           </strong></p>
         </div>
       </Card>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         <Button onClick={saveAndExit}>{t('results.saveAndExit')}</Button>
         <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'share' })}>
           {t('results.challengeFriend')}
