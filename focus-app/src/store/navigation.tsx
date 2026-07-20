@@ -22,7 +22,8 @@ export type ScreenName =
   | 'coach'
   | 'login'
   | 'admin-setup'
-  | 'access-denied';
+  | 'access-denied'
+  | 'phone-services';
 
 export interface SessionRecord {
   readonly id: string;

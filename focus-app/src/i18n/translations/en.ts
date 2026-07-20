@@ -249,6 +249,35 @@ const en = {
   'settings.signOut': 'Sign Out',
   'settings.administration': 'Administration',
   'settings.adminSetup': 'Admin Setup',
+
+  // Home
+  'home.phoneServices': 'Phone Services',
+
+  // Phone Services
+  'phoneServices.title': 'Phone Services',
+  'phoneServices.subtitle': 'Replace your phone or browse available used devices',
+  'phoneServices.replacementTitle': 'Phone Replacement',
+  'phoneServices.replacementDescription': 'Select your phone model and condition to request a replacement evaluation.',
+  'phoneServices.brand': 'Brand',
+  'phoneServices.selectBrand': 'Select brand...',
+  'phoneServices.model': 'Model',
+  'phoneServices.selectModel': 'Select model...',
+  'phoneServices.storage': 'Storage Capacity',
+  'phoneServices.selectStorage': 'Select storage...',
+  'phoneServices.condition': 'Device Condition',
+  'phoneServices.condition.excellent': 'Excellent',
+  'phoneServices.condition.good': 'Good',
+  'phoneServices.condition.fair': 'Fair',
+  'phoneServices.condition.poor': 'Poor',
+  'phoneServices.batteryHealth': 'Battery Health',
+  'phoneServices.submitRequest': 'Submit Request',
+  'phoneServices.requestSent': 'Request Submitted!',
+  'phoneServices.requestSentMessage': 'Your replacement request has been received. We will contact you soon.',
+  'phoneServices.newRequest': 'New Request',
+  'phoneServices.usedTitle': 'Available Used Phones',
+  'phoneServices.usedDescription': 'Browse our selection of verified used phones at competitive prices.',
+  'phoneServices.browseUsed': 'Browse Phones',
+  'phoneServices.back': 'Back to Home',
 } as const;
 
 export default en;

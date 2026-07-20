@@ -34,6 +34,9 @@ export function HomeScreen() {
           <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'coach' })}>
             {t('home.aiCoach')}
           </Button>
+          <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'phone-services' })}>
+            {t('home.phoneServices')}
+          </Button>
         </div>
       </Card>
     </nav>

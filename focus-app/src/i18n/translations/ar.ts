@@ -229,6 +229,35 @@ const ar: Record<TranslationKey, string> = {
   'settings.signOut': 'تسجيل الخروج',
   'settings.administration': 'الإدارة',
   'settings.adminSetup': 'إعداد المدير',
+
+  // Home
+  'home.phoneServices': 'خدمات الهاتف',
+
+  // Phone Services
+  'phoneServices.title': 'خدمات الهاتف',
+  'phoneServices.subtitle': 'استبدل هاتفك أو تصفح الأجهزة المستعملة المتاحة',
+  'phoneServices.replacementTitle': 'استبدال الهاتف',
+  'phoneServices.replacementDescription': 'اختر طراز هاتفك وحالته لطلب تقييم الاستبدال.',
+  'phoneServices.brand': 'العلامة التجارية',
+  'phoneServices.selectBrand': 'اختر العلامة...',
+  'phoneServices.model': 'الطراز',
+  'phoneServices.selectModel': 'اختر الطراز...',
+  'phoneServices.storage': 'سعة التخزين',
+  'phoneServices.selectStorage': 'اختر السعة...',
+  'phoneServices.condition': 'حالة الجهاز',
+  'phoneServices.condition.excellent': 'ممتاز',
+  'phoneServices.condition.good': 'جيد',
+  'phoneServices.condition.fair': 'مقبول',
+  'phoneServices.condition.poor': 'ضعيف',
+  'phoneServices.batteryHealth': 'صحة البطارية',
+  'phoneServices.submitRequest': 'إرسال الطلب',
+  'phoneServices.requestSent': 'تم إرسال الطلب!',
+  'phoneServices.requestSentMessage': 'تم استلام طلب الاستبدال. سنتواصل معك قريباً.',
+  'phoneServices.newRequest': 'طلب جديد',
+  'phoneServices.usedTitle': 'الهواتف المستعملة المتوفرة',
+  'phoneServices.usedDescription': 'تصفح مجموعة الهواتف المستعملة الموثقة بأسعار تنافسية.',
+  'phoneServices.browseUsed': 'تصفح الهواتف',
+  'phoneServices.back': 'العودة للرئيسية',
 };
 
 export default ar;

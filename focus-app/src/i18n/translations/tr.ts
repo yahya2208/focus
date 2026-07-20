@@ -229,6 +229,35 @@ const tr: Record<TranslationKey, string> = {
   'settings.signOut': 'Çıkış Yap',
   'settings.administration': 'Yönetim',
   'settings.adminSetup': 'Yönetici Ayarları',
+
+  // Home
+  'home.phoneServices': 'Telefon Hizmetleri',
+
+  // Phone Services
+  'phoneServices.title': 'Telefon Hizmetleri',
+  'phoneServices.subtitle': 'Telefonunuzu değiştirin veya mevcut ikinci el cihazlara göz atın',
+  'phoneServices.replacementTitle': 'Telefon Değişimi',
+  'phoneServices.replacementDescription': 'Değişim talebi için telefon modelinizi ve durumunu seçin.',
+  'phoneServices.brand': 'Marka',
+  'phoneServices.selectBrand': 'Marka seçin...',
+  'phoneServices.model': 'Model',
+  'phoneServices.selectModel': 'Model seçin...',
+  'phoneServices.storage': 'Depolama Kapasitesi',
+  'phoneServices.selectStorage': 'Depolama seçin...',
+  'phoneServices.condition': 'Cihaz Durumu',
+  'phoneServices.condition.excellent': 'Mükemmel',
+  'phoneServices.condition.good': 'İyi',
+  'phoneServices.condition.fair': 'Orta',
+  'phoneServices.condition.poor': 'Kötü',
+  'phoneServices.batteryHealth': 'Pil Sağlığı',
+  'phoneServices.submitRequest': 'Talep Gönder',
+  'phoneServices.requestSent': 'Talep Gönderildi!',
+  'phoneServices.requestSentMessage': 'Değişim talebiniz alındı. En kısa sürede sizinle iletişime geçeceğiz.',
+  'phoneServices.newRequest': 'Yeni Talep',
+  'phoneServices.usedTitle': 'Mevcut İkinci El Telefonlar',
+  'phoneServices.usedDescription': 'Uygun fiyatlı doğrulanmış ikinci el telefonlarımızı keşfedin.',
+  'phoneServices.browseUsed': 'Telefonlara Göz At',
+  'phoneServices.back': 'Ana Sayfaya Dön',
 };
 
 export default tr;

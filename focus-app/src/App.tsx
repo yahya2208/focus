@@ -27,6 +27,7 @@ import { CoachScreen } from './screens/coach/CoachScreen';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { AdminSetupScreen } from './screens/auth/AdminSetupScreen';
 import { AccessDeniedScreen } from './screens/auth/AccessDeniedScreen';
+import { PhoneServicesScreen } from './screens/phone-services/PhoneServicesScreen';
 import type { ScreenName } from './store/navigation';
 import { useThemeColors } from './hooks/useThemeColors';
 import { parseDeepLinkFromCurrentUrl } from './core/qr/deeplink';
@@ -53,6 +54,7 @@ const screens: Record<ScreenName, React.FC> = {
   login: LoginScreen,
   'admin-setup': AdminSetupScreen,
   'access-denied': AccessDeniedScreen,
+  'phone-services': PhoneServicesScreen,
 };
 
 function HtmlSync() {
