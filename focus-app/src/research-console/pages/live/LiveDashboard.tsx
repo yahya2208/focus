@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createResearchAPI, type LiveEvent } from '../../../core/research/api';
+import { createResearchAPI, type LiveEvent } from '../../../core/research/api-supabase';
 import { ResearchLayout, StatCard, DashboardHeader, FilterBar } from '../../layout/ResearchLayout';
 import { PieChart } from '../../components/charts/Charts';
 import type { DashboardId } from '../../layout/ResearchLayout';

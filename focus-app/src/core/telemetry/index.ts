@@ -119,10 +119,45 @@ export function createTelemetryService(
 }
 
 let globalTelemetry: TelemetryService | null = null;
+let supabaseSendFn: ((events: readonly TelemetryEvent[]) => Promise<void>) | null = null;
+
+async function createSupabaseSendFn(): Promise<(events: readonly TelemetryEvent[]) => Promise<void>> {
+  if (supabaseSendFn) return supabaseSendFn;
+  
+  try {
+    const { getDataService } = await import('../supabase/data-service');
+    const dataService = getDataService();
+    
+    supabaseSendFn = async (events: readonly TelemetryEvent[]) => {
+      for (const event of events) {
+        await dataService.trackEvent({
+          user_id: event.userId ?? undefined,
+          session_id: event.sessionId ?? undefined,
+          event_type: event.type,
+          event_data: event.properties,
+          device_id: event.deviceId ?? undefined,
+          user_agent: navigator.userAgent,
+        });
+      }
+    };
+  } catch (error) {
+    console.error('[Telemetry] Failed to initialize Supabase sender:', error);
+    supabaseSendFn = async () => {};
+  }
+  
+  return supabaseSendFn;
+}
+
+export async function initGlobalTelemetry(): Promise<void> {
+  const sendFn = await createSupabaseSendFn();
+  globalTelemetry = createTelemetryService(sendFn, { flushIntervalMs: 5000, batchSize: 5 });
+}
 
 export function getGlobalTelemetry(): TelemetryService {
   if (!globalTelemetry) {
     globalTelemetry = createTelemetryService();
+    // Async init - will start sending to Supabase once ready
+    initGlobalTelemetry().catch(() => {});
   }
   return globalTelemetry;
 }

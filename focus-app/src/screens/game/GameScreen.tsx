@@ -53,7 +53,7 @@ function pickPosition(prev: { x: number; y: number }): { x: number; y: number } 
 
 const KEYFRAMES_CSS = `
 @keyframes lampAppear{0%{transform:translate(-50%,-50%) scale(0);opacity:0;filter:blur(4px)}50%{transform:translate(-50%,-50%) scale(1.1);opacity:1;filter:blur(0)}100%{transform:translate(-50%,-50%) scale(1);opacity:1;filter:blur(0)}}
-@keyframes lampPulse{0%,100%{box-shadow:0 0 12px #f59e0b66,0 0 24px #f59e0b33,0 0 48px #f59e0b22,inset 0 0 8px #f59e0baa}50%{box-shadow:0 0 16px #f59e0b88,0 0 32px #f59e0b44,0 0 64px #f59e0b33,inset 0 0 12px #f59e0bcc}}
+@keyframes lampPulse{0%,100%{filter:brightness(1) drop-shadow(0 0 12px #f59e0b66)}50%{filter:brightness(1.15) drop-shadow(0 0 20px #f59e0b88)}}
 @keyframes lampShatter{0%{transform:translate(-50%,-50%) scale(1);opacity:1;filter:brightness(1)}15%{transform:translate(-50%,-50%) scale(1.3);opacity:1;filter:brightness(2.5)}100%{transform:translate(-50%,-50%) scale(0);opacity:0;filter:brightness(0.3)}}
 @keyframes crackSpread{0%{opacity:0;transform:translate(-50%,-50%) scale(0.3)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
 @keyframes shardFly{0%{opacity:1;transform:translate(0,0) rotate(0deg)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(var(--sr))}}
@@ -78,9 +78,9 @@ function GlassLamp({ visible, onRef }: { visible: boolean; onRef: (el: HTMLButto
         cursor: 'pointer', zIndex: 5, outline: 'none',
         touchAction: 'manipulation',
         animation: 'lampAppear 0.2s ease-out forwards, lampPulse 1.5s ease-in-out infinite',
-        background: `radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 30%, transparent 60%),
+        background: `radial-gradient(circle at 50% 50%, transparent -20%, ${colors.warning}22 0%, ${colors.warning}44 30%, ${colors.warning}66 50%, ${colors.warning}33 70%, transparent 100%),
+                     radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 30%, transparent 60%),
                      radial-gradient(circle at 50% 50%, ${colors.warning} 0%, ${colors.warning}cc 35%, ${colors.warning}66 65%, transparent 100%)`,
-        boxShadow: `0 4px 16px ${colors.warning}66, 0 8px 32px ${colors.warning}33, 0 16px 56px ${colors.warning}22, inset 0 -4px 8px ${colors.warning}44, inset 0 2px 6px rgba(255,255,255,0.3)`,
       }}
       onClick={(e) => { e.stopPropagation(); }}
       onTouchEnd={(e) => { e.preventDefault(); }}
@@ -341,24 +341,6 @@ export function GameScreen() {
           visible={phase === 'visible'}
           onRef={(el) => { lampElRef.current = el; }}
         />
-        {phase === 'visible' && (
-          <div
-            style={{
-              position: 'absolute',
-              left: `${lp.x}%`, top: `${lp.y}%`,
-              transform: 'translate(-50%, -50%)',
-              width: LAMP_SIZE, height: LAMP_SIZE,
-              pointerEvents: 'none', zIndex: 6,
-            }}
-          >
-            <div style={{
-              position: 'absolute', inset: '-10%',
-              borderRadius: '50%',
-              background: `radial-gradient(circle, ${colors.warning}22 0%, transparent 70%)`,
-              animation: 'lampPulse 1.5s ease-in-out infinite',
-            }} />
-          </div>
-        )}
 
         {/* Shatter effect — glass shards + crack lines */}
         {phase === 'hit' && (
@@ -417,36 +399,6 @@ export function GameScreen() {
             })}
           </>
         )}
-
-        {/* Bottom instruction */}
-        <div style={{
-          position: 'absolute', bottom: '2rem', left: 0, right: 0,
-          textAlign: 'center', zIndex: 10,
-        }}>
-          {phase === 'waiting' && (
-            <div style={{
-              display: 'inline-block',
-              background: colors.glass,
-              border: `1px solid ${colors.glassBorder}`,
-              borderRadius: '12px',
-              padding: '0.5rem 1.25rem',
-              backdropFilter: 'blur(8px)',
-            }}>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', margin: 0 }}>{t('game.ready')}</p>
-            </div>
-          )}
-          {phase === 'visible' && (
-            <div style={{
-              display: 'inline-block',
-              background: `${colors.warning}18`,
-              border: `1px solid ${colors.warning}44`,
-              borderRadius: '12px',
-              padding: '0.5rem 1.25rem',
-            }}>
-              <p style={{ color: colors.warning, fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{t('game.stimulus')}</p>
-            </div>
-          )}
-        </div>
       </nav>
     </>
   );

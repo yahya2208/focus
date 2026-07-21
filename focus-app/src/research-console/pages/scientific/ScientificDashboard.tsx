@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createResearchAPI, type ScientificMetrics } from '../../../core/research/api';
+import { createResearchAPI, type ScientificMetrics } from '../../../core/research/api-supabase';
 import { ResearchLayout, StatCard, DashboardHeader, FilterBar } from '../../layout/ResearchLayout';
 import { Histogram, BarChart } from '../../components/charts/Charts';
 import type { DashboardId } from '../../layout/ResearchLayout';
@@ -32,8 +32,8 @@ export function ScientificDashboard() {
             <StatCard label="P90" value={`${metrics.percentiles.p90.toFixed(0)}ms`} />
             <StatCard label="P95" value={`${metrics.percentiles.p95.toFixed(0)}ms`} />
             <StatCard label="Accuracy" value={`${(metrics.accuracy * 100).toFixed(1)}%`} color="#22c55e" />
-            <StatCard label="Consistency" value={`${(metrics.consistency.score * 100).toFixed(1)}%`} color="#6366f1" />
-            <StatCard label="Fatigue" value={`${(metrics.fatigue.score * 100).toFixed(1)}%`} color="#ef4444" />
+            <StatCard label="Consistency" value={`${metrics.consistency.score.toFixed(1)}%`} color="#6366f1" />
+            <StatCard label="Fatigue" value={`${metrics.fatigue.score.toFixed(1)}%`} color="#ef4444" />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { createResearchAPI, type UserAnalytics, type CampaignAnalytics, type OverviewStats } from '../../../core/research/api';
+import { createResearchAPI, type UserAnalytics, type CampaignAnalytics, type OverviewStats } from '../../../core/research/api-supabase';
+import { getDataService } from '../../../core/supabase/data-service';
+import { getSupabaseClient } from '../../../core/supabase/client';
 import { ResearchLayout, StatCard, DashboardHeader, FilterBar } from '../../layout/ResearchLayout';
 import { BarChart } from '../../components/charts/Charts';
 import type { DashboardId } from '../../layout/ResearchLayout';
@@ -38,21 +40,24 @@ export function AcquisitionDashboard() {
 
   useEffect(() => {
     const api = createResearchAPI();
+    const client = getSupabaseClient();
+    const dataService = getDataService(client);
+    
     Promise.all([
       api.getOverview(filters),
       api.getUserAnalytics(filters),
       api.getCampaignAnalytics(filters),
-    ]).then(([overview, users, campaigns]) => {
-      const qrScans = campaigns.campaigns.reduce((sum, c) => sum + c.scanCount, 0);
+      dataService.getQRStats(),
+    ]).then(([overview, users, campaigns, qrStats]) => {
+      const qrScans = qrStats.totalScans;
       const registrations = users.conversions;
-      const registerClicks = Math.round(registrations * 2.5);
       const gamesCompleted = overview.gamesPlayed;
-      const gamesStarted = Math.round(gamesCompleted * 1.15);
+      const gamesStarted = qrStats.totalGameStarts || gamesCompleted;
       const guestGames = Math.round(gamesCompleted * 0.65);
       const registeredGames = gamesCompleted - guestGames;
       const conversionRate = qrScans > 0 ? (registrations / qrScans) * 100 : 0;
-      const bestCampaign = campaigns.campaignRanking[0]?.campaign ?? 'N/A';
-      const bestQr = campaigns.referralPerformance[0]?.referralCode ?? 'N/A';
+      const bestCampaign = campaigns.campaigns[0]?.name ?? 'N/A';
+      const bestQr = campaigns.referralPerformance[0]?.code ?? 'N/A';
 
       setStats({
         overview,
@@ -63,7 +68,7 @@ export function AcquisitionDashboard() {
         gamesCompleted,
         guestGames,
         registeredGames,
-        registerClicks,
+        registerClicks: qrStats.totalGameStarts,
         registrations,
         conversionRate,
         avgReactionTime: overview.avgReactionTime,
@@ -74,8 +79,8 @@ export function AcquisitionDashboard() {
         bestQr,
         topDevice: 'Mobile',
         topCountry: 'Global',
-        returnRateDay1: 34.2,
-        returnRateDay7: 18.7,
+        returnRateDay1: 0,
+        returnRateDay7: 0,
         dailyData: [],
       });
     });

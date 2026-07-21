@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createResearchAPI, type SessionAnalytics } from '../../../core/research/api';
+import { createResearchAPI, type SessionAnalytics } from '../../../core/research/api-supabase';
 import { ResearchLayout, StatCard, DashboardHeader, FilterBar } from '../../layout/ResearchLayout';
 import { BarChart, PieChart } from '../../components/charts/Charts';
 import type { DashboardId } from '../../layout/ResearchLayout';
@@ -26,10 +26,10 @@ export function SessionsDashboard() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <StatCard label="Total Sessions" value={data.sessionsTimeline?.length ?? 0} color="#6366f1" />
-            <StatCard label="Completion Rate" value={`${(data.completionRate * 100).toFixed(1)}%`} color="#22c55e" />
-            <StatCard label="Abort Rate" value={`${(data.abortRate * 100).toFixed(1)}%`} color="#ef4444" />
+            <StatCard label="Completion Rate" value={`${data.completionRate.toFixed(1)}%`} color="#22c55e" />
+            <StatCard label="Abort Rate" value={`${data.abortRate.toFixed(1)}%`} color="#ef4444" />
             <StatCard label="Calibration Failures" value={data.calibrationFailures} color="#f59e0b" />
-            <StatCard label="Avg Duration" value={`${(data.avgSessionDuration / 1000).toFixed(1)}s`} />
+            <StatCard label="Avg Duration" value={`${data.avgSessionDuration.toFixed(1)}s`} />
             <StatCard label="Sync Success" value={`${(data.syncSuccessRate * 100).toFixed(1)}%`} color="#22c55e" />
             <StatCard label="Pending Sync" value={data.pendingSync} color="#f59e0b" />
             <StatCard label="Failed Sync" value={data.failedSync} color="#ef4444" />

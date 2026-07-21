@@ -4,6 +4,7 @@ import { ThemeProvider } from './design-system/use-theme';
 import { SettingsProvider } from './hooks/useSettings';
 import { TranslationProvider, useTranslation } from './hooks/useTranslation';
 import { AuthProvider } from './core/auth/AuthProvider';
+import { PersistenceProvider } from './core/supabase/PersistenceProvider';
 import { useThemeSync } from './hooks/useThemeSync';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
@@ -132,9 +133,11 @@ export default function App() {
           <TranslationProvider>
             <AuthProvider>
               <AppProvider>
-                <HtmlSync />
-                <InitialRoute />
-                <ScreenRouter />
+                <PersistenceProvider>
+                  <HtmlSync />
+                  <InitialRoute />
+                  <ScreenRouter />
+                </PersistenceProvider>
               </AppProvider>
             </AuthProvider>
           </TranslationProvider>
