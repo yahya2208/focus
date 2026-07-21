@@ -1,13 +1,113 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppState } from '../../store/navigation';
 import { getSupabaseClient } from './client';
+import { collectDeviceProfile, type DeviceProfile } from '../device';
+import type { CalibrationProfile } from '../calibration';
 
 export function PersistenceProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { sessions } = useAppState();
+  const { sessions, calibrationProfile } = useAppState();
   const lastSavedCountRef = useRef(0);
   const dispatchRef = useRef(dispatch);
   dispatchRef.current = dispatch;
+  const deviceRef = useRef<{ deviceId: string; calibrationId: string } | null>(null);
+
+  const ensureDeviceAndCalibration = useCallback(async (userId: string): Promise<{ deviceId: string; calibrationId: string }> => {
+    if (deviceRef.current) return deviceRef.current;
+
+    const client = getSupabaseClient();
+
+    const deviceProfile: DeviceProfile = collectDeviceProfile();
+
+    const { data: existingDevice } = await client
+      .from('devices')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+
+    let deviceId: string;
+    if (existingDevice) {
+      deviceId = existingDevice.id;
+    } else {
+      const { data: newDevice, error: deviceError } = await client
+        .from('devices')
+        .insert({
+          user_id: userId,
+          browser: deviceProfile.browser,
+          browser_version: deviceProfile.browserVersion,
+          os: deviceProfile.os,
+          os_version: deviceProfile.osVersion,
+          platform: deviceProfile.platform,
+          screen_width: deviceProfile.screenWidth,
+          screen_height: deviceProfile.screenHeight,
+          pixel_ratio: deviceProfile.pixelRatio,
+          refresh_rate: deviceProfile.refreshRate,
+          touch_support: deviceProfile.touchSupport,
+          pointer_type: deviceProfile.pointerType,
+          cpu_cores: deviceProfile.cpuCores,
+          memory_gb: deviceProfile.memoryGB,
+          language: deviceProfile.language,
+          timezone: deviceProfile.timezone,
+          user_agent: deviceProfile.userAgent,
+          collected_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (deviceError) {
+        console.error('[Persistence] Device insert failed:', deviceError.message);
+        deviceId = `fallback-device-${Date.now()}`;
+      } else {
+        deviceId = newDevice.id;
+      }
+    }
+
+    const cal: CalibrationProfile = calibrationProfile ?? {
+      refreshRate: 60, displayLagMs: 16.667, inputLagMs: 8,
+      confidence: 0.5, platform: 'unknown', timestamp: Date.now(),
+    };
+
+    const { data: existingCal } = await client
+      .from('calibrations')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('device_id', deviceId)
+      .limit(1)
+      .maybeSingle();
+
+    let calibrationId: string;
+    if (existingCal) {
+      calibrationId = existingCal.id;
+    } else {
+      const { data: newCal, error: calError } = await client
+        .from('calibrations')
+        .insert({
+          user_id: userId,
+          device_id: deviceId,
+          refresh_rate: cal.refreshRate,
+          display_lag_ms: cal.displayLagMs,
+          input_lag_ms: cal.inputLagMs,
+          confidence: cal.confidence,
+          platform: cal.platform,
+          browser_name: deviceProfile.browser,
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (calError) {
+        console.error('[Persistence] Calibration insert failed:', calError.message);
+        calibrationId = `fallback-calibration-${Date.now()}`;
+      } else {
+        calibrationId = newCal.id;
+      }
+    }
+
+    deviceRef.current = { deviceId, calibrationId };
+    return deviceRef.current;
+  }, [calibrationProfile]);
 
   const saveSessionToSupabase = useCallback(async (session: {
     id: string;
@@ -19,27 +119,34 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     try {
       const client = getSupabaseClient();
       const { data: { user } } = await client.auth.getUser();
-      const userId = user?.id ?? 'anonymous';
+
+      if (!user) {
+        console.error('[Persistence] No authenticated user — cannot save session');
+        return;
+      }
+
+      const { deviceId, calibrationId } = await ensureDeviceAndCalibration(user.id);
 
       const mean = session.correctedRts.length > 0
         ? session.correctedRts.reduce((a, b) => a + b, 0) / session.correctedRts.length
         : 0;
-      
+
       const sorted = [...session.correctedRts].sort((a, b) => a - b);
-      const median = session.correctedRts.length > 0
-        ? session.correctedRts.length % 2 === 0
-          ? ((sorted[session.correctedRts.length / 2 - 1] ?? 0) + (sorted[session.correctedRts.length / 2] ?? 0)) / 2
-          : (sorted[Math.floor(session.correctedRts.length / 2)] ?? 0)
+      const n = session.correctedRts.length;
+      const median = n > 0
+        ? n % 2 === 0
+          ? ((sorted[n / 2 - 1] ?? 0) + (sorted[n / 2] ?? 0)) / 2
+          : (sorted[Math.floor(n / 2)] ?? 0)
         : 0;
 
-      const variance = session.correctedRts.length > 0
-        ? session.correctedRts.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / session.correctedRts.length
+      const variance = n > 0
+        ? session.correctedRts.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n
         : 0;
       const stdDev = Math.sqrt(variance);
       const cv = mean > 0 ? stdDev / mean : 0;
       const consistencyScore = Math.max(0, 100 - cv * 100);
 
-      const midpoint = Math.floor(session.correctedRts.length / 2);
+      const midpoint = Math.floor(n / 2);
       const firstHalf = session.correctedRts.slice(0, midpoint);
       const secondHalf = session.correctedRts.slice(midpoint);
       const firstMean = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : mean;
@@ -58,9 +165,9 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
 
       const { error } = await client.from('sessions').upsert({
         id: session.id,
-        user_id: userId,
-        device_id: 'web-browser',
-        calibration_id: 'default',
+        user_id: user.id,
+        device_id: deviceId,
+        calibration_id: calibrationId,
         plugin_id: session.gameMode,
         status: 'completed',
         measurements: {
@@ -88,21 +195,15 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
       });
 
       if (error) {
-        console.error('[Persistence] Supabase save failed:', error.message);
-        // Store in localStorage as fallback
-        const fallbackKey = 'focus_pending_sessions';
-        const existing = JSON.parse(localStorage.getItem(fallbackKey) ?? '[]');
-        existing.push({ ...session, userId, savedAt: Date.now() });
-        localStorage.setItem(fallbackKey, JSON.stringify(existing.slice(-50))); // Keep last 50
+        console.error('[Persistence] Supabase save failed:', error.message, error);
       } else {
-        console.log('[Persistence] Session saved to Supabase:', session.id);
+        console.log('[Persistence] Session saved to Supabase:', session.id, 'user:', user.id);
       }
     } catch (error) {
       console.error('[Persistence] Error:', error);
     }
-  }, []);
+  }, [ensureDeviceAndCalibration]);
 
-  // Intercept SAVE_SESSION by watching sessions array length changes
   useEffect(() => {
     if (sessions.length > lastSavedCountRef.current && sessions.length > 0) {
       const newSession = sessions[sessions.length - 1];
@@ -112,33 +213,6 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }
     lastSavedCountRef.current = sessions.length;
   }, [sessions, saveSessionToSupabase]);
-
-  // Sync pending localStorage sessions to Supabase on mount
-  useEffect(() => {
-    const syncPending = async () => {
-      try {
-        const pendingKey = 'focus_pending_sessions';
-        const pending = JSON.parse(localStorage.getItem(pendingKey) ?? '[]');
-        if (pending.length === 0) return;
-
-        const client = getSupabaseClient();
-        const { data: { user } } = await client.auth.getUser();
-        if (!user) return;
-
-        for (const session of pending) {
-          await saveSessionToSupabase(session);
-        }
-        localStorage.removeItem(pendingKey);
-        console.log('[Persistence] Synced', pending.length, 'pending sessions');
-      } catch (error) {
-        console.error('[Persistence] Failed to sync pending sessions:', error);
-      }
-    };
-
-    // Delay sync to avoid blocking initial render
-    const timer = setTimeout(syncPending, 2000);
-    return () => clearTimeout(timer);
-  }, [saveSessionToSupabase]);
 
   return <>{children}</>;
 }

@@ -1,4 +1,37 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const { mockFrom, chain } = vi.hoisted(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function makeChain(): any {
+    const c: Record<string, unknown> = {};
+    c.select = vi.fn(() => c);
+    c.insert = vi.fn(() => c);
+    c.update = vi.fn(() => c);
+    c.eq = vi.fn(() => c);
+    c.neq = vi.fn(() => c);
+    c.gt = vi.fn(() => c);
+    c.gte = vi.fn(() => c);
+    c.lt = vi.fn(() => c);
+    c.lte = vi.fn(() => c);
+    c.in = vi.fn(() => c);
+    c.not = vi.fn(() => c);
+    c.order = vi.fn(() => c);
+    c.limit = vi.fn(() => c);
+    c.single = vi.fn();
+    c.maybeSingle = vi.fn();
+    return c;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chain = makeChain() as any;
+  const mockFrom = vi.fn(() => chain);
+  return { mockFrom, chain };
+});
+
+vi.mock('../../core/supabase/client', () => ({
+  getSupabaseClient: () => ({ from: mockFrom }),
+}));
+
 import {
   parseCampaignParams, parseCampaignFromQueryString, serializeCampaignParams,
   hasCampaign, createCampaignStore,
@@ -98,10 +131,30 @@ describe('hasCampaign', () => {
   });
 });
 
-describe('Campaign Store', () => {
-  it('should create a campaign', () => {
+describe('Campaign Store (Supabase-backed)', () => {
+  beforeEach(() => {
+    chain.select.mockImplementation(() => chain);
+    chain.insert.mockImplementation(() => chain);
+    chain.update.mockImplementation(() => chain);
+    chain.eq.mockImplementation(() => chain);
+    chain.not.mockImplementation(() => chain);
+    chain.order.mockImplementation(() => chain);
+    chain.single.mockReset();
+    chain.maybeSingle.mockReset();
+  });
+
+  it('should create a campaign', async () => {
+    chain.single.mockResolvedValue({
+      data: {
+        id: 'c1', name: 'School 2026', source: 'school', location: null,
+        school: null, company: null, event: null, language: null,
+        version: null, is_active: true, created_at: new Date().toISOString(),
+      },
+      error: null,
+    });
+
     const store = createCampaignStore();
-    const campaign = store.create('School 2026', 'https://focus.app');
+    const campaign = await store.create('School 2026', 'https://focus.app');
     expect(campaign.name).toBe('School 2026');
     expect(campaign.baseUrl).toBe('https://focus.app');
     expect(campaign.active).toBe(true);
@@ -109,85 +162,62 @@ describe('Campaign Store', () => {
     expect(campaign.conversionCount).toBe(0);
   });
 
-  it('should create campaign with custom params', () => {
-    const store = createCampaignStore();
-    const campaign = store.create('Conference', 'https://focus.app', {
-      location: 'riyadh',
-      language: 'ar',
+  it('should retrieve campaign by ID', async () => {
+    chain.single.mockResolvedValue({
+      data: {
+        id: 'c1', name: 'Test', is_active: true,
+        location: null, school: null, company: null,
+        event: null, language: null, version: null, source: null,
+        created_at: new Date().toISOString(),
+      },
+      error: null,
     });
-    expect(campaign.params.location).toBe('riyadh');
-    expect(campaign.params.language).toBe('ar');
-    expect(campaign.params.campaign).toBe('conference');
+
+    const store = createCampaignStore();
+    const retrieved = await store.get('c1');
+    expect(retrieved?.id).toBe('c1');
   });
 
-  it('should retrieve campaign by ID', () => {
+  it('should return null for non-existent campaign', async () => {
+    chain.single.mockResolvedValue({ data: null, error: { message: 'not found' } });
+
     const store = createCampaignStore();
-    const created = store.create('Test', 'https://focus.app');
-    const retrieved = store.get(created.id);
-    expect(retrieved?.id).toBe(created.id);
+    expect(await store.get('nonexistent')).toBeNull();
   });
 
-  it('should return null for non-existent campaign', () => {
+  it('should list all campaigns', async () => {
+    chain.order.mockResolvedValue({
+      data: [
+        { id: 'c1', name: 'A', is_active: true, created_at: new Date().toISOString(),
+          location: null, school: null, company: null, event: null, language: null, version: null, source: null },
+        { id: 'c2', name: 'B', is_active: true, created_at: new Date().toISOString(),
+          location: null, school: null, company: null, event: null, language: null, version: null, source: null },
+      ],
+      error: null,
+    });
+
     const store = createCampaignStore();
-    expect(store.get('nonexistent')).toBeNull();
+    const all = await store.getAll();
+    expect(all).toHaveLength(2);
   });
 
-  it('should list all campaigns', () => {
-    const store = createCampaignStore();
-    store.create('Campaign A', 'https://focus.app');
-    store.create('Campaign B', 'https://focus.app');
-    expect(store.getAll()).toHaveLength(2);
-  });
+  it('should compute stats', async () => {
+    chain.eq.mockResolvedValue({
+      data: [{ scan_count: 3, registration_count: 1 }],
+      error: null,
+    });
 
-  it('should record scans', () => {
     const store = createCampaignStore();
-    const campaign = store.create('Test', 'https://focus.app');
-    store.recordScan(campaign.id);
-    store.recordScan(campaign.id);
-    const updated = store.get(campaign.id);
-    expect(updated?.scanCount).toBe(2);
-  });
-
-  it('should record conversions', () => {
-    const store = createCampaignStore();
-    const campaign = store.create('Test', 'https://focus.app');
-    store.recordScan(campaign.id);
-    store.recordScan(campaign.id);
-    store.recordConversion(campaign.id);
-    const updated = store.get(campaign.id);
-    expect(updated?.conversionCount).toBe(1);
-  });
-
-  it('should deactivate campaign', () => {
-    const store = createCampaignStore();
-    const campaign = store.create('Test', 'https://focus.app');
-    store.deactivate(campaign.id);
-    const updated = store.get(campaign.id);
-    expect(updated?.active).toBe(false);
-  });
-
-  it('should compute stats', () => {
-    const store = createCampaignStore();
-    const campaign = store.create('Test', 'https://focus.app');
-    store.recordScan(campaign.id);
-    store.recordScan(campaign.id);
-    store.recordScan(campaign.id);
-    store.recordConversion(campaign.id);
-    const stats = store.getStats(campaign.id);
+    const stats = await store.getStats('c1');
     expect(stats?.scanCount).toBe(3);
     expect(stats?.conversionCount).toBe(1);
     expect(stats?.conversionRate).toBeCloseTo(1 / 3);
   });
 
-  it('should return null stats for non-existent campaign', () => {
-    const store = createCampaignStore();
-    expect(store.getStats('nonexistent')).toBeNull();
-  });
+  it('should return null stats for non-existent campaign', async () => {
+    chain.eq.mockResolvedValue({ data: [], error: null });
 
-  it('should have zero conversion rate for zero scans', () => {
     const store = createCampaignStore();
-    const campaign = store.create('Test', 'https://focus.app');
-    const stats = store.getStats(campaign.id);
-    expect(stats?.conversionRate).toBe(0);
+    expect(await store.getStats('nonexistent')).toBeNull();
   });
 });

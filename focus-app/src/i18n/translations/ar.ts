@@ -19,6 +19,7 @@ const ar: Record<TranslationKey, string> = {
   'home.aiCoach': 'المدرب الذكي',
   'home.phoneServices': 'خدمات الهاتف',
   'home.researchConsole': 'لوحة البحث',
+  'home.noSessionsToday': 'لا توجد جلسات اليوم',
 
   'library.title': 'مكتبة الألعاب',
   'library.reactionLight.name': 'اختبار وقت الاستجابة',

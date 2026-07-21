@@ -148,8 +148,20 @@ export function HomeScreen() {
           {t('home.todayFocus')}
         </p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.25rem' }}>
-          <span style={{ fontSize: '3rem', fontWeight: 'bold', color: colors.accent, lineHeight: 1 }}>87</span>
-          <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>/100</span>
+          {(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const todaySessions = sessions.filter((s) => new Date(s.timestamp).toISOString().split('T')[0] === today);
+            const scores = todaySessions.map((s) => s.score?.focusScore).filter((s): s is number => s != null && !isNaN(s));
+            const todayFocus = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+            return todayFocus !== null ? (
+              <>
+                <span style={{ fontSize: '3rem', fontWeight: 'bold', color: colors.accent, lineHeight: 1 }}>{todayFocus}</span>
+                <span style={{ color: colors.textMuted, fontSize: '0.85rem' }}>/100</span>
+              </>
+            ) : (
+              <span style={{ fontSize: '1.1rem', color: colors.textMuted }}>{t('home.noSessionsToday')}</span>
+            );
+          })()}
         </div>
         <p style={{ color: colors.textSecondary, fontSize: '0.8rem' }}>
           {t('home.focusDescription')}

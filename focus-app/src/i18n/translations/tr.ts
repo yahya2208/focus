@@ -19,6 +19,7 @@ const tr: Record<TranslationKey, string> = {
   'home.aiCoach': 'Yapay Zeka Koçu',
   'home.phoneServices': 'Telefon Hizmetleri',
   'home.researchConsole': 'Araştırma Konsolu',
+  'home.noSessionsToday': 'Bugün oturum yok',
 
   'library.title': 'Oyun Kütüphanesi',
   'library.reactionLight.name': 'Reaksiyon Işığı Testi',

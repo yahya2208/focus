@@ -19,6 +19,7 @@ const en = {
   'home.aiCoach': 'AI Coach',
   'home.phoneServices': 'Phone Services',
   'home.researchConsole': 'Research Console',
+  'home.noSessionsToday': 'No sessions today',
 
   // Library
   'library.title': 'Game Library',

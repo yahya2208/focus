@@ -157,7 +157,7 @@ export function createResearchAPI(): ResearchAPI {
 
       const [usersResult, sessionsResult, todayResult, weekResult, monthResult, qrStats] = await Promise.all([
         client.from('users').select('id, role', { count: 'exact' }),
-        client.from('sessions').select('id, status, scientific_results, created_at, device_id', { count: 'exact' }),
+        client.from('sessions').select('id, status, measurements, scientific_results, created_at, device_id', { count: 'exact' }),
         client.from('sessions').select('id', { count: 'exact' }).gte('created_at', todayStart),
         client.from('sessions').select('id', { count: 'exact' }).gte('created_at', weekStart),
         client.from('sessions').select('id', { count: 'exact' }).gte('created_at', monthStart),
@@ -176,6 +176,11 @@ export function createResearchAPI(): ResearchAPI {
         .map(s => (s.scientific_results as Record<string, unknown>)?.focus_score as number)
         .filter(score => typeof score === 'number' && !isNaN(score));
 
+      const allCorrectedRts = completedSessions.flatMap(s => {
+        const measurements = s.measurements as Record<string, unknown> | null;
+        return ((measurements?.corrected_rts as number[]) ?? []);
+      });
+
       const avgFocusScore = focusScores.length > 0
         ? focusScores.reduce((a, b) => a + b, 0) / focusScores.length
         : 0;
@@ -192,10 +197,15 @@ export function createResearchAPI(): ResearchAPI {
         gamesToday: todayResult.count ?? 0,
         gamesThisWeek: weekResult.count ?? 0,
         gamesThisMonth: monthResult.count ?? 0,
-        avgReactionTime: 0,
+        avgReactionTime: allCorrectedRts.length > 0 ? Math.round(allCorrectedRts.reduce((a, b) => a + b, 0) / allCorrectedRts.length) : 0,
         avgFocusScore: Math.round(avgFocusScore * 10) / 10,
-        avgConsistency: 0,
-        avgFatigue: 0,
+        avgConsistency: focusScores.length > 0 ? Math.round(focusScores.reduce((a, b) => a + b, 0) / focusScores.length * 10) / 10 : 0,
+        avgFatigue: (() => {
+          const fatigueScores = completedSessions
+            .map(s => (s.scientific_results as Record<string, unknown>)?.fatigue_score as number)
+            .filter(score => typeof score === 'number' && !isNaN(score));
+          return fatigueScores.length > 0 ? Math.round(fatigueScores.reduce((a, b) => a + b, 0) / fatigueScores.length * 10) / 10 : 0;
+        })(),
         avgCalibrationConfidence: 0,
         countries: 0,
         cities: 0,
@@ -224,30 +234,48 @@ export function createResearchAPI(): ResearchAPI {
         return (measurements?.corrected_rts as number[]) ?? [];
       });
 
-      const focusScores = sessions
-        .map(s => (s.scientific_results as Record<string, unknown>)?.focus_score as number)
+      const consistencyScores = sessions
+        .map(s => (s.scientific_results as Record<string, unknown>)?.consistency_score as number)
         .filter(score => typeof score === 'number');
+
+      const fatigueScores = sessions
+        .map(s => (s.scientific_results as Record<string, unknown>)?.fatigue_score as number)
+        .filter(score => typeof score === 'number');
+
+      const falseStarts = allCorrectedRts.filter(rt => rt < 150).length;
 
       const n = allCorrectedRts.length;
       const mean = n > 0 ? allCorrectedRts.reduce((a, b) => a + b, 0) / n : 0;
       const sorted = [...allCorrectedRts].sort((a, b) => a - b);
       const median = n > 0 ? (n % 2 === 0 ? (sorted[n / 2 - 1]! + sorted[n / 2]!) / 2 : sorted[Math.floor(n / 2)]!) : 0;
       const variance = n > 0 ? allCorrectedRts.reduce((s, v) => s + (v - mean) ** 2, 0) / n : 0;
+      const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
+
+      const consistencyScore = consistencyScores.length > 0
+        ? consistencyScores.reduce((a, b) => a + b, 0) / consistencyScores.length
+        : cv > 0 ? Math.max(0, 100 - cv * 100) : 0;
+
+      const rating = consistencyScore >= 80 ? 'excellent' : consistencyScore >= 60 ? 'good'
+        : consistencyScore >= 40 ? 'average' : consistencyScore >= 20 ? 'poor' : 'unknown';
+
+      const fatigueIndex = fatigueScores.length > 0
+        ? fatigueScores.reduce((a, b) => a + b, 0) / fatigueScores.length / 100
+        : 0;
 
       return {
         reactionTime: { median, mean, stdDev: Math.sqrt(variance), variance },
         percentiles: computePercentiles(allCorrectedRts),
-        falseStarts: 0,
-        accuracy: sessions.length > 0 ? 1 : 0,
+        falseStarts,
+        accuracy: sessions.length > 0 ? Math.round((1 - falseStarts / n) * 100) : 0,
         consistency: {
-          score: focusScores.length > 0 ? focusScores.reduce((a, b) => a + b, 0) / focusScores.length : 0,
-          rating: 'unknown',
-          cv: mean > 0 ? Math.sqrt(variance) / mean : 0,
+          score: Math.round(consistencyScore * 10) / 10,
+          rating,
+          cv: Math.round(cv * 1000) / 1000,
         },
         fatigue: {
-          index: 0,
-          score: 0,
-          detected: false,
+          index: Math.round(fatigueIndex * 1000) / 1000,
+          score: Math.round(fatigueScores.length > 0 ? fatigueScores.reduce((a, b) => a + b, 0) / fatigueScores.length : 0),
+          detected: fatigueIndex > 0.1,
         },
         calibrationConfidence: 0,
         distribution: computeDistribution(allCorrectedRts, 10),
@@ -363,9 +391,9 @@ export function createResearchAPI(): ResearchAPI {
 
       return {
         sessionsTimeline,
-        completionRate: sessions.length > 0 ? (completed / sessions.length) * 100 : 0,
-        abortRate: sessions.length > 0 ? (failed / sessions.length) * 100 : 0,
-        calibrationFailures: 0,
+        completionRate: sessions.length > 0 ? Math.round((completed / sessions.length) * 100 * 10) / 10 : 0,
+        abortRate: sessions.length > 0 ? Math.round((failed / sessions.length) * 100 * 10) / 10 : 0,
+        calibrationFailures: sessions.filter(s => s.status === 'failed').length,
         avgSessionDuration: Math.round(avgDuration),
         avgGameDuration: Math.round(avgDuration),
         avgCountdownTime: 0,
@@ -460,12 +488,21 @@ export function createResearchAPI(): ResearchAPI {
       return {
         campaigns,
         referralPerformance,
-        landingConversion: 0,
-        registrationConversion: 0,
-        sessionCompletionByCampaign: [],
+        landingConversion: campaigns.length > 0 ? Math.round((qrResult.data.length / Math.max(campaigns.length, 1)) * 100) / 100 : 0,
+        registrationConversion: qrResult.data.length > 0 ? Math.round((qrResult.data.reduce((sum, qr) => sum + qr.registration_count, 0) / qrResult.data.reduce((sum, qr) => sum + qr.scan_count, 0)) * 100) / 100 : 0,
+        sessionCompletionByCampaign: campaigns.map(c => {
+          const campaignQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
+          const totalScans = campaignQrs.reduce((sum, qr) => sum + qr.scan_count, 0);
+          return { campaign: c.name, rate: totalScans > 0 ? Math.round((campaignQrs.reduce((sum, qr) => sum + qr.registration_count, 0) / totalScans) * 100) : 0 };
+        }),
         avgRtByCampaign: [],
         avgFocusByCampaign: [],
-        campaignRanking: [],
+        campaignRanking: campaigns.map(c => {
+          const campaignQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
+          const totalScans = campaignQrs.reduce((sum, qr) => sum + qr.scan_count, 0);
+          const totalRegs = campaignQrs.reduce((sum, qr) => sum + qr.registration_count, 0);
+          return { campaign: c.name, score: totalScans + totalRegs * 10 };
+        }).sort((a, b) => b.score - a.score),
       };
     },
 

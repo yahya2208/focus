@@ -1,3 +1,5 @@
+import { getSupabaseClient } from '../supabase/client';
+
 export interface CampaignParams {
   readonly campaign: string | null;
   readonly location: string | null;
@@ -64,13 +66,13 @@ export interface CampaignRecord {
 }
 
 export interface CampaignStore {
-  create(name: string, baseUrl: string, params?: Partial<CampaignParams>): CampaignRecord;
-  get(id: string): CampaignRecord | null;
-  getAll(): readonly CampaignRecord[];
-  recordScan(id: string): void;
-  recordConversion(id: string): void;
-  deactivate(id: string): void;
-  getStats(id: string): CampaignStats | null;
+  create(name: string, baseUrl: string, params?: Partial<CampaignParams>): Promise<CampaignRecord>;
+  get(id: string): Promise<CampaignRecord | null>;
+  getAll(): Promise<readonly CampaignRecord[]>;
+  recordScan(id: string): Promise<void>;
+  recordConversion(id: string): Promise<void>;
+  deactivate(id: string): Promise<void>;
+  getStats(id: string): Promise<CampaignStats | null>;
 }
 
 export interface CampaignStats {
@@ -80,75 +82,156 @@ export interface CampaignStats {
   readonly conversionRate: number;
 }
 
-let campaignCounter = 0;
-
 export function createCampaignStore(): CampaignStore {
-  const campaigns = new Map<string, CampaignRecord>();
-
   return {
-    create(name: string, baseUrl: string, params: Partial<CampaignParams> = {}): CampaignRecord {
-      const id = `camp_${Date.now().toString(36)}_${(campaignCounter++).toString(36)}`;
-      const record: CampaignRecord = {
-        id,
-        name,
-        createdAt: Date.now(),
+    async create(name: string, baseUrl: string, params: Partial<CampaignParams> = {}): Promise<CampaignRecord> {
+      const client = getSupabaseClient();
+      const campaignParams: CampaignParams = {
+        campaign: params.campaign ?? name.toLowerCase().replace(/\s+/g, '-'),
+        location: params.location ?? null,
+        school: params.school ?? null,
+        company: params.company ?? null,
+        event: params.event ?? null,
+        version: params.version ?? null,
+        language: params.language ?? null,
+        source: params.source ?? null,
+        referrer: params.referrer ?? null,
+      };
+
+      const { data, error } = await client
+        .from('campaigns')
+        .insert({
+          name,
+          source: campaignParams.source,
+          location: campaignParams.location,
+          school: campaignParams.school,
+          company: campaignParams.company,
+          event: campaignParams.event,
+          language: campaignParams.language,
+          version: campaignParams.version,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(`Failed to create campaign: ${error.message}`);
+
+      return {
+        id: data.id,
+        name: data.name,
+        createdAt: new Date(data.created_at).getTime(),
         baseUrl,
-        params: {
-          campaign: params.campaign ?? name.toLowerCase().replace(/\s+/g, '-'),
-          location: params.location ?? null,
-          school: params.school ?? null,
-          company: params.company ?? null,
-          event: params.event ?? null,
-          version: params.version ?? null,
-          language: params.language ?? null,
-          source: params.source ?? null,
-          referrer: params.referrer ?? null,
-        },
+        params: campaignParams,
         scanCount: 0,
         conversionCount: 0,
         active: true,
       };
-      campaigns.set(id, record);
-      return record;
     },
 
-    get(id: string): CampaignRecord | null {
-      return campaigns.get(id) ?? null;
-    },
+    async get(id: string): Promise<CampaignRecord | null> {
+      const client = getSupabaseClient();
+      const { data, error } = await client
+        .from('campaigns')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    getAll(): readonly CampaignRecord[] {
-      return [...campaigns.values()];
-    },
+      if (error || !data) return null;
 
-    recordScan(id: string): void {
-      const c = campaigns.get(id);
-      if (c) {
-        campaigns.set(id, { ...c, scanCount: c.scanCount + 1 });
-      }
-    },
-
-    recordConversion(id: string): void {
-      const c = campaigns.get(id);
-      if (c) {
-        campaigns.set(id, { ...c, conversionCount: c.conversionCount + 1 });
-      }
-    },
-
-    deactivate(id: string): void {
-      const c = campaigns.get(id);
-      if (c) {
-        campaigns.set(id, { ...c, active: false });
-      }
-    },
-
-    getStats(id: string): CampaignStats | null {
-      const c = campaigns.get(id);
-      if (!c) return null;
       return {
-        id: c.id,
-        scanCount: c.scanCount,
-        conversionCount: c.conversionCount,
-        conversionRate: c.scanCount > 0 ? c.conversionCount / c.scanCount : 0,
+        id: data.id,
+        name: data.name,
+        createdAt: new Date(data.created_at).getTime(),
+        baseUrl: '',
+        params: {
+          campaign: data.name,
+          location: data.location,
+          school: data.school,
+          company: data.company,
+          event: data.event,
+          version: data.version,
+          language: data.language,
+          source: data.source,
+          referrer: null,
+        },
+        scanCount: 0,
+        conversionCount: 0,
+        active: data.is_active,
+      };
+    },
+
+    async getAll(): Promise<readonly CampaignRecord[]> {
+      const client = getSupabaseClient();
+      const { data, error } = await client
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) return [];
+
+      return data.map((row) => ({
+        id: row.id,
+        name: row.name,
+        createdAt: new Date(row.created_at).getTime(),
+        baseUrl: '',
+        params: {
+          campaign: row.name,
+          location: row.location,
+          school: row.school,
+          company: row.company,
+          event: row.event,
+          version: row.version,
+          language: row.language,
+          source: row.source,
+          referrer: null,
+        },
+        scanCount: 0,
+        conversionCount: 0,
+        active: row.is_active,
+      }));
+    },
+
+    async recordScan(id: string): Promise<void> {
+      const client = getSupabaseClient();
+      await client
+        .from('qr_codes')
+        .update({ scan_count: client.rpc('increment_scan_count') })
+        .eq('campaign_id', id);
+    },
+
+    async recordConversion(id: string): Promise<void> {
+      const client = getSupabaseClient();
+      await client
+        .from('qr_codes')
+        .update({ registration_count: client.rpc('increment_registration_count') })
+        .eq('campaign_id', id);
+    },
+
+    async deactivate(id: string): Promise<void> {
+      const client = getSupabaseClient();
+      await client
+        .from('campaigns')
+        .update({ is_active: false })
+        .eq('id', id);
+    },
+
+    async getStats(id: string): Promise<CampaignStats | null> {
+      const client = getSupabaseClient();
+      const { data, error } = await client
+        .from('qr_codes')
+        .select('scan_count, registration_count')
+        .eq('campaign_id', id);
+
+      if (error || !data || data.length === 0) return null;
+
+      const totalScans = data.reduce((sum, row) => sum + (row.scan_count || 0), 0);
+      const totalConversions = data.reduce((sum, row) => sum + (row.registration_count || 0), 0);
+
+      return {
+        id,
+        scanCount: totalScans,
+        conversionCount: totalConversions,
+        conversionRate: totalScans > 0 ? totalConversions / totalScans : 0,
       };
     },
   };

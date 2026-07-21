@@ -46,7 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const s = createAuthService();
       setService(s);
-      setState(s.getState());
+      
+      const currentState = s.getState();
+      setState(currentState);
+      
+      // Auto-create anonymous user if no existing session
+      if (currentState.status === 'unauthenticated') {
+        s.signInAsGuest().catch((err) => {
+          console.warn('[Auth] Auto guest sign-in failed:', err.message);
+        });
+      }
+      
       return s.onStateChange((newState) => {
         setState(newState);
       });

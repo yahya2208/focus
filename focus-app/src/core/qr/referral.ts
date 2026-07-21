@@ -1,3 +1,5 @@
+import { getSupabaseClient } from '../supabase/client';
+
 export interface ReferralProfile {
   readonly id: string;
   readonly userId: string;
@@ -22,15 +24,15 @@ export interface ReferralScan {
 }
 
 export interface ReferralEngine {
-  createProfile(userId: string): ReferralProfile;
-  getProfile(userId: string): ReferralProfile | null;
-  getProfileByCode(code: string): ReferralProfile | null;
-  recordScan(userId: string, campaignId?: string): void;
-  recordConversion(userId: string): void;
-  getStats(userId: string): ReferralStats | null;
-  generateReferralUrl(userId: string, baseUrl: string): string;
-  generateReferralQrData(userId: string, baseUrl: string): string;
-  getAllProfiles(): readonly ReferralProfile[];
+  createProfile(userId: string): Promise<ReferralProfile>;
+  getProfile(userId: string): Promise<ReferralProfile | null>;
+  getProfileByCode(code: string): Promise<ReferralProfile | null>;
+  recordScan(userId: string, campaignId?: string): Promise<void>;
+  recordConversion(userId: string): Promise<void>;
+  getStats(userId: string): Promise<ReferralStats | null>;
+  generateReferralUrl(userId: string, baseUrl: string): Promise<string>;
+  generateReferralQrData(userId: string, baseUrl: string): Promise<string>;
+  getAllProfiles(): Promise<readonly ReferralProfile[]>;
 }
 
 function generateReferralCode(): string {
@@ -42,106 +44,174 @@ function generateReferralCode(): string {
   return code;
 }
 
-let referralCounter = 0;
-
 export function createReferralEngine(): ReferralEngine {
-  const profiles = new Map<string, ReferralProfile>();
-  const scansByUser = new Map<string, ReferralScan[]>();
-  const codeToUser = new Map<string, string>();
-
   return {
-    createProfile(userId: string): ReferralProfile {
-      const existing = profiles.get(userId);
-      if (existing) return existing;
+    async createProfile(userId: string): Promise<ReferralProfile> {
+      const client = getSupabaseClient();
 
-      let code = generateReferralCode();
-      while (codeToUser.has(code)) {
-        code = generateReferralCode();
+      const { data: existing } = await client
+        .from('users')
+        .select('id, referral_code, created_at')
+        .eq('id', userId)
+        .single();
+
+      if (existing?.referral_code) {
+        return {
+          id: existing.id,
+          userId: existing.id,
+          referralCode: existing.referral_code,
+          createdAt: new Date(existing.created_at).getTime(),
+          totalScans: 0,
+          totalConversions: 0,
+        };
       }
 
-      const profile: ReferralProfile = {
-        id: `ref_${Date.now().toString(36)}_${(referralCounter++).toString(36)}`,
+      let code = generateReferralCode();
+      let attempts = 0;
+      while (attempts < 10) {
+        const { data: existingCode } = await client
+          .from('users')
+          .select('id')
+          .eq('referral_code', code)
+          .single();
+
+        if (!existingCode) break;
+        code = generateReferralCode();
+        attempts++;
+      }
+
+      const { error } = await client
+        .from('users')
+        .update({ referral_code: code })
+        .eq('id', userId);
+
+      if (error) throw new Error(`Failed to create referral profile: ${error.message}`);
+
+      return {
+        id: userId,
         userId,
         referralCode: code,
         createdAt: Date.now(),
         totalScans: 0,
         totalConversions: 0,
       };
-      profiles.set(userId, profile);
-      scansByUser.set(userId, []);
-      codeToUser.set(code, userId);
-      return profile;
     },
 
-    getProfile(userId: string): ReferralProfile | null {
-      return profiles.get(userId) ?? null;
-    },
+    async getProfile(userId: string): Promise<ReferralProfile | null> {
+      const client = getSupabaseClient();
+      const { data, error } = await client
+        .from('users')
+        .select('id, referral_code, created_at')
+        .eq('id', userId)
+        .single();
 
-    getProfileByCode(code: string): ReferralProfile | null {
-      const userId = codeToUser.get(code);
-      if (!userId) return null;
-      return profiles.get(userId) ?? null;
-    },
+      if (error || !data?.referral_code) return null;
 
-    recordScan(userId: string, campaignId?: string): void {
-      const profile = profiles.get(userId);
-      if (!profile) return;
-      profiles.set(userId, { ...profile, totalScans: profile.totalScans + 1 });
-      const scans = scansByUser.get(userId) ?? [];
-      scans.push({
-        timestamp: Date.now(),
-        campaignId: campaignId ?? null,
-        converted: false,
-      });
-      scansByUser.set(userId, scans);
-    },
-
-    recordConversion(userId: string): void {
-      const profile = profiles.get(userId);
-      if (!profile) return;
-      profiles.set(userId, {
-        ...profile,
-        totalConversions: profile.totalConversions + 1,
-      });
-      const scans = scansByUser.get(userId);
-      if (scans && scans.length > 0) {
-        const lastScan = scans[scans.length - 1];
-        if (lastScan && !lastScan.converted) {
-          scans[scans.length - 1] = { ...lastScan, converted: true };
-          scansByUser.set(userId, scans);
-        }
-      }
-    },
-
-    getStats(userId: string): ReferralStats | null {
-      const profile = profiles.get(userId);
-      if (!profile) return null;
-      const scans = scansByUser.get(userId) ?? [];
       return {
-        code: profile.referralCode,
-        totalScans: profile.totalScans,
-        totalConversions: profile.totalConversions,
-        conversionRate: profile.totalScans > 0
-          ? profile.totalConversions / profile.totalScans
-          : 0,
-        recentScans: scans.slice(-50),
+        id: data.id,
+        userId: data.id,
+        referralCode: data.referral_code,
+        createdAt: new Date(data.created_at).getTime(),
+        totalScans: 0,
+        totalConversions: 0,
       };
     },
 
-    generateReferralUrl(userId: string, baseUrl: string): string {
-      const profile = profiles.get(userId);
+    async getProfileByCode(code: string): Promise<ReferralProfile | null> {
+      const client = getSupabaseClient();
+      const { data, error } = await client
+        .from('users')
+        .select('id, referral_code, created_at')
+        .eq('referral_code', code)
+        .single();
+
+      if (error || !data) return null;
+
+      return {
+        id: data.id,
+        userId: data.id,
+        referralCode: data.referral_code,
+        createdAt: new Date(data.created_at).getTime(),
+        totalScans: 0,
+        totalConversions: 0,
+      };
+    },
+
+    async recordScan(userId: string, campaignId?: string): Promise<void> {
+      const client = getSupabaseClient();
+      await client.from('analytics_events').insert({
+        event_type: 'referral_scan',
+        user_id: userId,
+        event_data: { referral_code: userId, campaign_id: campaignId ?? null },
+        created_at: new Date().toISOString(),
+      });
+    },
+
+    async recordConversion(userId: string): Promise<void> {
+      const client = getSupabaseClient();
+      await client.from('analytics_events').insert({
+        event_type: 'referral_conversion',
+        user_id: userId,
+        event_data: { referral_code: userId },
+        created_at: new Date().toISOString(),
+      });
+    },
+
+    async getStats(userId: string): Promise<ReferralStats | null> {
+      const client = getSupabaseClient();
+      const profile = await this.getProfile(userId);
+      if (!profile) return null;
+
+      const { data: events } = await client
+        .from('analytics_events')
+        .select('event_type, created_at, event_data')
+        .eq('user_id', userId)
+        .in('event_type', ['referral_scan', 'referral_conversion']);
+
+      const eventList = events ?? [];
+      const scans = eventList.filter(e => e.event_type === 'referral_scan');
+      const conversions = eventList.filter(e => e.event_type === 'referral_conversion');
+
+      return {
+        code: profile.referralCode,
+        totalScans: scans.length,
+        totalConversions: conversions.length,
+        conversionRate: scans.length > 0 ? conversions.length / scans.length : 0,
+        recentScans: scans.slice(-50).map(e => ({
+          timestamp: new Date(e.created_at).getTime(),
+          campaignId: (e.event_data as Record<string, unknown>)?.campaign_id as string ?? null,
+          converted: false,
+        })),
+      };
+    },
+
+    async generateReferralUrl(userId: string, baseUrl: string): Promise<string> {
+      const profile = await this.getProfile(userId);
       if (!profile) throw new Error(`No referral profile for user ${userId}`);
       const url = new URL(baseUrl);
       url.searchParams.set('ref', profile.referralCode);
       return url.toString();
     },
 
-    generateReferralQrData(userId: string, baseUrl: string): string {
+    async generateReferralQrData(userId: string, baseUrl: string): Promise<string> {
       return this.generateReferralUrl(userId, baseUrl);
     },
 
-    getAllProfiles(): readonly ReferralProfile[] {
-      return [...profiles.values()];
+    async getAllProfiles(): Promise<readonly ReferralProfile[]> {
+      const client = getSupabaseClient();
+      const { data } = await client
+        .from('users')
+        .select('id, referral_code, created_at')
+        .not('referral_code', 'is', null);
+
+      return (data ?? []).map(row => ({
+        id: row.id,
+        userId: row.id,
+        referralCode: row.referral_code,
+        createdAt: new Date(row.created_at).getTime(),
+        totalScans: 0,
+        totalConversions: 0,
+      }));
     },
   };
 }

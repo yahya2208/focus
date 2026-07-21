@@ -48,16 +48,47 @@ export function AcquisitionDashboard() {
       api.getUserAnalytics(filters),
       api.getCampaignAnalytics(filters),
       dataService.getQRStats(),
-    ]).then(([overview, users, campaigns, qrStats]) => {
+      client.from('sessions').select('user_id, created_at, status, finished_at, device_id'),
+      client.from('devices').select('os, browser, screen_width, screen_height'),
+    ]).then(([overview, users, campaigns, qrStats, sessionsResult, devicesResult]) => {
       const qrScans = qrStats.totalScans;
       const registrations = users.conversions;
       const gamesCompleted = overview.gamesPlayed;
       const gamesStarted = qrStats.totalGameStarts || gamesCompleted;
-      const guestGames = Math.round(gamesCompleted * 0.65);
+      const sessions = sessionsResult.data ?? [];
+      const devices = devicesResult.data ?? [];
+
+      const registeredUserIds = new Set(
+        sessions.filter(s => s.user_id).map(s => s.user_id)
+      );
+      const guestGames = sessions.filter(s => !s.user_id || !registeredUserIds.has(s.user_id)).length;
       const registeredGames = gamesCompleted - guestGames;
       const conversionRate = qrScans > 0 ? (registrations / qrScans) * 100 : 0;
       const bestCampaign = campaigns.campaigns[0]?.name ?? 'N/A';
       const bestQr = campaigns.referralPerformance[0]?.code ?? 'N/A';
+
+      const osCounts = new Map<string, number>();
+      devices.forEach(d => { osCounts.set(d.os, (osCounts.get(d.os) ?? 0) + 1); });
+      const topDevice = osCounts.size > 0
+        ? (Array.from(osCounts.entries()).sort(([,a], [,b]) => b - a)[0]?.[0] ?? 'N/A')
+        : 'N/A';
+
+      const durations = sessions
+        .filter(s => s.finished_at && s.created_at)
+        .map(s => new Date(s.finished_at).getTime() - new Date(s.created_at).getTime());
+      const avgGameDuration = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length / 1000 * 10) / 10 : 0;
+
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const uniqueUsers = new Set(sessions.map(s => s.user_id).filter(Boolean));
+      const usersDayAgo = new Set(sessions.filter(s => s.created_at < dayAgo).map(s => s.user_id).filter(Boolean));
+      const usersWeekAgo = new Set(sessions.filter(s => s.created_at < weekAgo).map(s => s.user_id).filter(Boolean));
+      const returnRateDay1 = uniqueUsers.size > 0 && usersDayAgo.size > 0
+        ? Math.round(Array.from(usersDayAgo).filter(uid => sessions.some(s => s.user_id === uid && s.created_at >= dayAgo)).length / usersDayAgo.size * 100)
+        : 0;
+      const returnRateDay7 = uniqueUsers.size > 0 && usersWeekAgo.size > 0
+        ? Math.round(Array.from(usersWeekAgo).filter(uid => sessions.some(s => s.user_id === uid && s.created_at >= weekAgo)).length / usersWeekAgo.size * 100)
+        : 0;
 
       setStats({
         overview,
@@ -66,21 +97,21 @@ export function AcquisitionDashboard() {
         qrScans,
         gamesStarted,
         gamesCompleted,
-        guestGames,
-        registeredGames,
+        guestGames: Math.max(0, guestGames),
+        registeredGames: Math.max(0, registeredGames),
         registerClicks: qrStats.totalGameStarts,
         registrations,
         conversionRate,
         avgReactionTime: overview.avgReactionTime,
-        avgGameDuration: Math.round((overview.avgReactionTime * 7) / 1000 * 10) / 10,
+        avgGameDuration,
         dropOffRate: Math.round(((gamesStarted - gamesCompleted) / Math.max(1, gamesStarted)) * 100 * 10) / 10,
-        avgTimeToRegister: Math.round((overview.avgReactionTime * 12) / 1000),
+        avgTimeToRegister: registrations > 0 ? Math.round((overview.avgReactionTime * 12) / 1000) : 0,
         bestCampaign,
         bestQr,
-        topDevice: 'Mobile',
-        topCountry: 'Global',
-        returnRateDay1: 0,
-        returnRateDay7: 0,
+        topDevice,
+        topCountry: 'N/A',
+        returnRateDay1,
+        returnRateDay7,
         dailyData: [],
       });
     });
