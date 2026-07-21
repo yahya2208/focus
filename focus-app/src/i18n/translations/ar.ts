@@ -77,6 +77,7 @@ const ar: Record<TranslationKey, string> = {
   'results.saveAndExit': 'حفظ وخروج',
   'results.challengeFriend': 'تحدَّ صديقك',
   'results.registerNow': 'سجّل الآن — حسّن تركيزك',
+  'results.saveResults': 'احفظ نتائجك وتتبع تقدمك',
   'results.register': 'تسجيل',
   'results.aiCoach': 'المدرب الذكي',
   'results.discard': 'تجاهل',

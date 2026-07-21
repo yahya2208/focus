@@ -24,7 +24,8 @@ export type ScreenName =
   | 'login'
   | 'admin-setup'
   | 'access-denied'
-  | 'phone-services';
+  | 'phone-services'
+  | 'achievements';
 
 export interface SessionRecord {
   readonly id: string;

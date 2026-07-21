@@ -83,6 +83,7 @@ const en = {
   'results.saveAndExit': 'Save & Exit',
   'results.challengeFriend': 'Challenge a Friend',
   'results.registerNow': 'Register Now — Improve Your Focus',
+  'results.saveResults': 'Save Your Results & Track Your Progress',
   'results.register': 'Register',
   'results.aiCoach': 'AI Coach',
   'results.discard': 'Discard',

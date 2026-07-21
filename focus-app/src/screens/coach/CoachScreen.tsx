@@ -85,27 +85,6 @@ function ProgressBar({ value, max = 100 }: { value: number; max?: number }) {
   );
 }
 
-function GlassStatCard({ label, value, color }: { label: string; value: string; color: string }) {
-  const colors = useThemeColors();
-  return (
-    <div style={{
-      background: colors.glass,
-      border: `1px solid ${colors.glassBorder}`,
-      borderRadius: '12px',
-      padding: '0.65rem',
-      textAlign: 'center',
-      backdropFilter: 'blur(8px)',
-    }}>
-      <p style={{ color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.2rem' }}>
-        {label}
-      </p>
-      <p style={{ color, fontSize: '1.1rem', fontWeight: 700, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function OverviewTab({ state }: { state: CoachState }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -288,18 +267,97 @@ function InsightsTab({ state }: { state: CoachState }) {
 function PassportTab({ state }: { state: CoachState }) {
   const colors = useThemeColors();
   const { passport } = state;
+  const sessions = useAppState().sessions;
+  const totalSessions = sessions.length;
+  const bestTime = sessions.length > 0 ? Math.min(...sessions.map((s) => Math.min(...(s.correctedRts.length > 0 ? s.correctedRts : s.rawRts)))) : 0;
+  const avgTime = sessions.length > 0
+    ? sessions.reduce((sum, s) => {
+        const rts = s.correctedRts.length > 0 ? s.correctedRts : s.rawRts;
+        return sum + (rts.length > 0 ? rts.reduce((a: number, b: number) => a + b, 0) / rts.length : 0);
+      }, 0) / sessions.length
+    : 0;
+  const lastPlayed = sessions.length > 0 ? new Date(sessions[sessions.length - 1]!.timestamp) : null;
+  const level = Math.min(20, Math.floor(totalSessions / 3) + 1);
+  const grade = passport.profile.overallScore >= 80 ? 'A+' : passport.profile.overallScore >= 70 ? 'A' : passport.profile.overallScore >= 60 ? 'B+' : passport.profile.overallScore >= 50 ? 'B' : passport.profile.overallScore >= 40 ? 'C' : 'D';
+
+  const formatLastPlayed = (d: Date | null) => {
+    if (!d) return 'Never';
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffH = Math.floor(diffMs / 3600000);
+    if (diffH < 1) return 'Just now';
+    if (diffH < 24) return `${diffH}h ago`;
+    const diffD = Math.floor(diffH / 24);
+    if (diffD === 1) return 'Yesterday';
+    return `${diffD}d ago`;
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <Card style={{ background: colors.gradient, border: `1px solid ${colors.glassBorder}` }}>
-        <h3 style={{ color: colors.text, margin: '0 0 0.5rem 0', fontSize: '0.85rem' }}>Cognitive Profile</h3>
-        <p style={{ color: colors.textSecondary, fontSize: '0.8rem', margin: '0 0 0.5rem 0' }}>{passport.profile.summary}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-          <GlassStatCard label="Overall Score" value={passport.profile.overallScore.toFixed(1)} color={colors.accent} />
-          <GlassStatCard label="Reliability" value={`${(passport.reliabilityIndex * 100).toFixed(0)}%`} color={colors.accent} />
-          <GlassStatCard label="Strength" value={passport.profile.dominantStrength} color={colors.success} />
-          <GlassStatCard label="Focus" value={passport.profile.primaryFocus} color={colors.warning} />
+      {/* Focus Passport Card */}
+      <div style={{
+        background: `linear-gradient(135deg, ${colors.accent}18 0%, ${colors.accent}08 100%)`,
+        border: `1px solid ${colors.accent}33`,
+        borderRadius: '18px',
+        padding: '1.25rem',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative glow */}
+        <div style={{
+          position: 'absolute', top: '-40%', right: '-20%',
+          width: '200px', height: '200px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${colors.accent}15 0%, transparent 70%)`,
+          pointerEvents: 'none',
+        }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+            <div>
+              <p style={{ color: colors.accent, fontSize: '0.65rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', fontWeight: 700, margin: '0 0 0.15rem' }}>Focus Passport</p>
+              <h2 style={{ color: colors.text, fontSize: '2rem', fontWeight: 800, margin: 0, lineHeight: 1 }}>Level {level}</h2>
+            </div>
+            <div style={{
+              background: colors.glass, border: `1px solid ${colors.glassBorder}`,
+              borderRadius: '12px', padding: '0.5rem 0.75rem', textAlign: 'center',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <p style={{ color: colors.textMuted, fontSize: '0.55rem', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 0.1rem' }}>Grade</p>
+              <p style={{ color: colors.accent, fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>{grade}</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: colors.textMuted, fontSize: '0.55rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.15rem' }}>Best</p>
+              <p style={{ color: colors.accent, fontSize: '1.15rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', margin: 0 }}>
+                {bestTime > 0 ? `${Math.round(bestTime)}` : '---'}
+                <span style={{ fontSize: '0.6rem', fontWeight: 500, color: colors.textMuted }}>ms</span>
+              </p>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: colors.textMuted, fontSize: '0.55rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.15rem' }}>Average</p>
+              <p style={{ color: colors.text, fontSize: '1.15rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', margin: 0 }}>
+                {avgTime > 0 ? `${Math.round(avgTime)}` : '---'}
+                <span style={{ fontSize: '0.6rem', fontWeight: 500, color: colors.textMuted }}>ms</span>
+              </p>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ color: colors.textMuted, fontSize: '0.55rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.15rem' }}>Sessions</p>
+              <p style={{ color: colors.text, fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{totalSessions}</p>
+            </div>
+          </div>
+
+          <div style={{
+            background: colors.glass, border: `1px solid ${colors.glassBorder}`,
+            borderRadius: '10px', padding: '0.5rem 0.75rem',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ color: colors.textMuted, fontSize: '0.7rem' }}>Last Played</span>
+            <span style={{ color: colors.text, fontSize: '0.75rem', fontWeight: 600 }}>{formatLastPlayed(lastPlayed)}</span>
+          </div>
         </div>
-      </Card>
+      </div>
 
       {passport.strengths.length > 0 && (
         <Card>

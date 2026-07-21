@@ -77,6 +77,7 @@ const tr: Record<TranslationKey, string> = {
   'results.saveAndExit': 'Kaydet ve Çık',
   'results.challengeFriend': 'Arkadaşına Meydan Oku',
   'results.registerNow': 'Kayıt Ol — Odaklanmani İyileştir',
+  'results.saveResults': 'Sonuçlarınızı Kaydedin & İlerlemenizi Takip Edin',
   'results.register': 'Kayıt Ol',
   'results.aiCoach': 'Yapay Zeka Koçu',
   'results.discard': 'Sil',
