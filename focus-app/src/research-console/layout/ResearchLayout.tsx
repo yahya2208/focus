@@ -5,10 +5,11 @@ import type { ResearchFilters, FilterKey } from '../../core/research/filters';
 
 export type DashboardId =
   | 'overview' | 'scientific' | 'users' | 'sessions'
-  | 'devices' | 'surveys' | 'campaigns' | 'live' | 'system';
+  | 'devices' | 'surveys' | 'campaigns' | 'live' | 'system' | 'acquisition';
 
 const DASHBOARDS: { id: DashboardId; label: string; icon: string }[] = [
   { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'acquisition', label: 'Acquisition', icon: '🎯' },
   { id: 'scientific', label: 'Scientific', icon: '🔬' },
   { id: 'users', label: 'Users', icon: '👥' },
   { id: 'sessions', label: 'Sessions', icon: '⏱' },

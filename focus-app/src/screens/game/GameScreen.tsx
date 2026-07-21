@@ -4,13 +4,15 @@ import { correctReactionTime } from '../../core/measurement';
 import { REACTION } from '../../core/scientific/constants';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { getGlobalTelemetry } from '../../core/telemetry';
 
 type Phase = 'waiting' | 'visible' | 'hit' | 'miss';
 
-const TOTAL_ROUNDS = 20;
-const MIN_DELAY_MS = 2000;
-const MAX_DELAY_MS = 5000;
-const LAMP_SIZE = 72;
+const TOTAL_ROUNDS = 7;
+const MIN_DELAY_MS = 750;
+const MAX_DELAY_MS = 2200;
+const LAMP_SIZE = 80;
+const MIN_POSITION_DISTANCE_PCT = 25;
 
 const POSITIONS = [
   { x: 20, y: 25 }, { x: 50, y: 20 }, { x: 80, y: 25 },
@@ -39,12 +41,20 @@ function playBreakSound() {
   } catch { /* silent */ }
 }
 
+function pickPosition(prev: { x: number; y: number }): { x: number; y: number } {
+  const candidates = POSITIONS.filter((p) => {
+    const dx = p.x - prev.x;
+    const dy = p.y - prev.y;
+    return Math.sqrt(dx * dx + dy * dy) >= MIN_POSITION_DISTANCE_PCT;
+  });
+  if (candidates.length === 0) return POSITIONS[Math.floor(Math.random() * POSITIONS.length)]!;
+  return candidates[Math.floor(Math.random() * candidates.length)]!;
+}
+
 const KEYFRAMES_CSS = `
-@keyframes lampGlowIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
-@keyframes lampBreak{0%{transform:scale(1);opacity:1;filter:brightness(1)}30%{transform:scale(1.4);opacity:1;filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(0.5)}}
+@keyframes lampGlowIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes glassCrack{0%{opacity:0;transform:scale(0.5)}20%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
-@keyframes rtPop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-@keyframes missFlash{0%{opacity:0}20%{opacity:.15}100%{opacity:0}}
+@keyframes rtPop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 `;
 
 export function GameScreen() {
@@ -61,7 +71,7 @@ export function GameScreen() {
   const bestTimeRef = useRef<number | null>(null);
   const lastRtRef = useRef<number | null>(null);
   const lampPosRef = useRef({ x: 50, y: 50 });
-  const prevLampIndexRef = useRef(-1);
+  const prevLampPosRef = useRef({ x: 50, y: 50 });
 
   const stimulusTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -82,10 +92,9 @@ export function GameScreen() {
     lastRtRef.current = null;
     const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
     timerRef.current = setTimeout(() => {
-      let next: number;
-      do { next = Math.floor(Math.random() * POSITIONS.length); } while (next === prevLampIndexRef.current);
-      prevLampIndexRef.current = next;
-      lampPosRef.current = POSITIONS[next]!;
+      const next = pickPosition(prevLampPosRef.current);
+      prevLampPosRef.current = next;
+      lampPosRef.current = next;
       stimulusTimeRef.current = performance.now();
       setPhase('visible');
     }, delay);
@@ -94,6 +103,14 @@ export function GameScreen() {
   useEffect(() => {
     if (round >= TOTAL_ROUNDS) {
       const rts = rawRtsRef.current;
+      getGlobalTelemetry().track('game_completed', {
+        totalRounds: TOTAL_ROUNDS,
+        validRounds: rts.filter((rt) => {
+          const corrected = rt - calibration.displayLagMs - calibration.inputLagMs;
+          return corrected >= REACTION.MIN_RT_MS;
+        }).length,
+        isQrFlow: false,
+      });
       dispatch({
         type: 'SET_RESULTS',
         results: {
@@ -120,27 +137,21 @@ export function GameScreen() {
   const handleLampTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     if (phaseRef.current !== 'visible') return;
+
     const rt = performance.now() - stimulusTimeRef.current;
     rawRtsRef.current.push(rt);
     lastRtRef.current = rt;
     if (bestTimeRef.current === null || rt < bestTimeRef.current) {
       bestTimeRef.current = rt;
     }
+
     setPhase('hit');
     playBreakSound();
     setHudTick((t) => t + 1);
-    roundTimerRef.current = setTimeout(() => {
-      setRound((r) => r + 1);
-    }, 800);
-  }, []);
 
-  const handleBackgroundTap = useCallback(() => {
-    if (phaseRef.current !== 'visible') return;
-    setPhase('miss');
-    setHudTick((t) => t + 1);
     roundTimerRef.current = setTimeout(() => {
       setRound((r) => r + 1);
-    }, 600);
+    }, 700);
   }, []);
 
   const progress = Math.round((round / TOTAL_ROUNDS) * 100);
@@ -153,7 +164,6 @@ export function GameScreen() {
       <style dangerouslySetInnerHTML={{ __html: KEYFRAMES_CSS }} />
       <nav
         aria-label={`Game round ${round + 1} of ${TOTAL_ROUNDS}`}
-        onClick={handleBackgroundTap}
         role="application"
         tabIndex={0}
         style={{
@@ -237,7 +247,7 @@ export function GameScreen() {
           </div>
         )}
 
-        {/* LED Lamp */}
+        {/* LED Glass Lamp — the ONLY target */}
         {phase === 'visible' && (
           <button
             aria-label="Tap the lamp"
@@ -251,14 +261,14 @@ export function GameScreen() {
               borderRadius: '50%', border: 'none', padding: 0,
               cursor: 'pointer', zIndex: 5, outline: 'none',
               touchAction: 'manipulation',
-              animation: 'lampGlowIn 0.25s ease-out forwards',
-              background: `radial-gradient(circle,${colors.warning} 0%,${colors.warning}dd 50%,${colors.warning}88 100%)`,
-              boxShadow: `0 0 20px ${colors.warning}88, 0 0 40px ${colors.warning}44, 0 0 60px ${colors.warning}22, inset 0 0 12px ${colors.warning}aa`,
+              animation: 'lampGlowIn 0.2s ease-out forwards',
+              background: `radial-gradient(circle, ${colors.warning} 0%, ${colors.warning}cc 40%, ${colors.warning}66 70%, transparent 100%)`,
+              boxShadow: `0 0 16px ${colors.warning}88, 0 0 32px ${colors.warning}44, 0 0 56px ${colors.warning}22, inset 0 0 10px ${colors.warning}aa`,
             }}
           />
         )}
 
-        {/* Glass crack on hit */}
+        {/* Glass crack effect on hit — AFTER measurement */}
         {phase === 'hit' && (
           <div
             key={`break-${hudTick}`}
@@ -283,16 +293,6 @@ export function GameScreen() {
               <line x1="67" y1="67" x2="80" y2="80" stroke={colors.success} strokeWidth="0.8" opacity="0.4" />
             </svg>
           </div>
-        )}
-
-        {/* Miss flash */}
-        {phase === 'miss' && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: colors.danger,
-            animation: 'missFlash 0.4s ease-out forwards',
-            pointerEvents: 'none', zIndex: 3,
-          }} />
         )}
 
         {/* Bottom instruction */}
@@ -321,17 +321,6 @@ export function GameScreen() {
               padding: '0.5rem 1.25rem',
             }}>
               <p style={{ color: colors.warning, fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{t('game.stimulus')}</p>
-            </div>
-          )}
-          {phase === 'miss' && (
-            <div style={{
-              display: 'inline-block',
-              background: `${colors.danger}18`,
-              border: `1px solid ${colors.danger}44`,
-              borderRadius: '12px',
-              padding: '0.5rem 1.25rem',
-            }}>
-              <p style={{ color: colors.danger, fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>{t('game.missed')}</p>
             </div>
           )}
         </div>

@@ -13,6 +13,7 @@ import { IntroScreen } from './screens/intro/IntroScreen';
 import { CalibrationScreen } from './screens/calibration/CalibrationScreen';
 import { CountdownScreen } from './screens/countdown/CountdownScreen';
 import { GameScreen } from './screens/game/GameScreen';
+import { GameIntroScreen } from './screens/game-intro/GameIntroScreen';
 import { ResultsScreen } from './screens/results/ResultsScreen';
 import { HistoryScreen } from './screens/history/HistoryScreen';
 import { SettingsScreen } from './screens/settings/SettingsScreen';
@@ -32,6 +33,8 @@ import type { ScreenName } from './store/navigation';
 import { useThemeColors } from './hooks/useThemeColors';
 import { parseDeepLinkFromCurrentUrl } from './core/qr/deeplink';
 import { hasCampaign } from './core/qr/campaign';
+import { getGlobalTelemetry } from './core/telemetry';
+import { runSilentCalibration } from './core/calibration/silent';
 
 const screens: Record<ScreenName, React.FC> = {
   home: HomeScreen,
@@ -40,6 +43,7 @@ const screens: Record<ScreenName, React.FC> = {
   calibration: CalibrationScreen,
   countdown: CountdownScreen,
   game: GameScreen,
+  'game-intro': GameIntroScreen,
   results: ResultsScreen,
   history: HistoryScreen,
   settings: SettingsScreen,
@@ -78,9 +82,26 @@ function InitialRoute() {
   useEffect(() => {
     if (currentScreen !== 'home') return;
     const deepLink = parseDeepLinkFromCurrentUrl();
-    if (deepLink.isValid && (hasCampaign(deepLink.campaign) || deepLink.referralCode)) {
-      dispatch({ type: 'NAVIGATE', screen: 'landing' });
+    const telemetry = getGlobalTelemetry();
+    const hasQrParams = hasCampaign(deepLink.campaign) || deepLink.referralCode;
+
+    if (deepLink.isValid && hasQrParams) {
+      telemetry.track('qr_scanned', {
+        source: deepLink.campaign.source,
+        campaign: deepLink.campaign.campaign,
+        referrer: deepLink.referralCode,
+      });
+
+      const source = deepLink.campaign.source ?? deepLink.campaign.campaign ?? deepLink.referralCode ?? 'qr_direct';
+      dispatch({ type: 'START_QR_FLOW', source });
+      return;
     }
+
+    runSilentCalibration().then((profile) => {
+      if (profile) {
+        dispatch({ type: 'SET_CALIBRATION', profile });
+      }
+    });
   }, [currentScreen, dispatch]);
 
   return null;

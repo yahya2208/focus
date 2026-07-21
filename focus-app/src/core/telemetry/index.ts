@@ -23,7 +23,10 @@ export type TelemetryEventType =
   | 'campaign_detected'
   | 'referral_clicked'
   | 'consent_granted'
-  | 'consent_withdrawn';
+  | 'consent_withdrawn'
+  | 'game_intro_shown'
+  | 'register_cta_clicked'
+  | 'qr_game_completed';
 
 export interface TelemetryEvent {
   readonly type: TelemetryEventType;

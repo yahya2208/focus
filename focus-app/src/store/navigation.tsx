@@ -9,6 +9,7 @@ export type ScreenName =
   | 'calibration'
   | 'countdown'
   | 'game'
+  | 'game-intro'
   | 'results'
   | 'history'
   | 'settings'
@@ -48,6 +49,8 @@ export interface AppState {
     validRounds: number;
   } | null;
   sessions: SessionRecord[];
+  isQrFlow: boolean;
+  qrSource: string | null;
 }
 
 type NavigationAction =
@@ -56,7 +59,8 @@ type NavigationAction =
   | { type: 'SET_CALIBRATION'; profile: CalibrationProfile }
   | { type: 'SET_RESULTS'; results: AppState['results'] }
   | { type: 'SAVE_SESSION' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'START_QR_FLOW'; source: string };
 
 const initialState: AppState = {
   screen: 'home',
@@ -66,6 +70,8 @@ const initialState: AppState = {
   sessionResults: null,
   results: null,
   sessions: [],
+  isQrFlow: false,
+  qrSource: null,
 };
 
 function navigationReducer(state: AppState, action: NavigationAction): AppState {
@@ -92,6 +98,8 @@ function navigationReducer(state: AppState, action: NavigationAction): AppState 
     }
     case 'RESET':
       return initialState;
+    case 'START_QR_FLOW':
+      return { ...initialState, screen: 'game-intro', currentScreen: 'game-intro', isQrFlow: true, qrSource: action.source };
     default:
       return state;
   }

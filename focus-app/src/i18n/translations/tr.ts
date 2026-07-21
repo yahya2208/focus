@@ -76,6 +76,7 @@ const tr: Record<TranslationKey, string> = {
   'results.no': 'Hayır',
   'results.saveAndExit': 'Kaydet ve Çık',
   'results.challengeFriend': 'Arkadaşına Meydan Oku',
+  'results.registerNow': 'Kayıt Ol — Odaklanmani İyileştir',
   'results.register': 'Kayıt Ol',
   'results.aiCoach': 'Yapay Zeka Koçu',
   'results.discard': 'Sil',
@@ -192,6 +193,7 @@ const tr: Record<TranslationKey, string> = {
 
   'research.title': 'Araştırma Konsolu',
   'research.overview': 'Genel Bakış',
+  'research.acquisition': 'Edinme',
   'research.sessions': 'Oturumlar',
   'research.users': 'Kullanıcılar',
   'research.cohorts': 'Kohortlar',

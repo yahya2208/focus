@@ -76,6 +76,7 @@ const ar: Record<TranslationKey, string> = {
   'results.no': 'لا',
   'results.saveAndExit': 'حفظ وخروج',
   'results.challengeFriend': 'تحدَّ صديقك',
+  'results.registerNow': 'سجّل الآن — حسّن تركيزك',
   'results.register': 'تسجيل',
   'results.aiCoach': 'المدرب الذكي',
   'results.discard': 'تجاهل',
@@ -192,6 +193,7 @@ const ar: Record<TranslationKey, string> = {
 
   'research.title': 'لوحة البحث',
   'research.overview': 'نظرة عامة',
+  'research.acquisition': 'الاكتساب',
   'research.sessions': 'الجلسات',
   'research.users': 'المستخدمون',
   'research.cohorts': 'المجموعات',

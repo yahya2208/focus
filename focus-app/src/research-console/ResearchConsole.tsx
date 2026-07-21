@@ -5,6 +5,7 @@ import { createPermissionGuard, type ResearchRole } from '../core/research/permi
 import { useTranslation } from '../hooks/useTranslation';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { OverviewDashboard } from './pages/overview/OverviewDashboard';
+import { AcquisitionDashboard } from './pages/acquisition/AcquisitionDashboard';
 import { ScientificDashboard } from './pages/scientific/ScientificDashboard';
 import { UsersDashboard } from './pages/users/UsersDashboard';
 import { SessionsDashboard } from './pages/sessions/SessionsDashboard';
@@ -26,6 +27,7 @@ const RESEARCH_ROLE_MAP: Partial<Record<ResearchRole, 'super_admin' | 'research_
 
 const DASHBOARD_RESOURCE_MAP: Record<DashboardId, string> = {
   overview: 'overview',
+  acquisition: 'overview',
   scientific: 'scientific',
   users: 'users',
   sessions: 'sessions',
@@ -38,6 +40,7 @@ const DASHBOARD_RESOURCE_MAP: Record<DashboardId, string> = {
 
 const dashboards: { id: DashboardId; translationKey: string }[] = [
   { id: 'overview', translationKey: 'research.overview' },
+  { id: 'acquisition', translationKey: 'research.acquisition' },
   { id: 'sessions', translationKey: 'research.sessions' },
   { id: 'users', translationKey: 'research.users' },
   { id: 'devices', translationKey: '' },
@@ -49,6 +52,7 @@ const dashboards: { id: DashboardId; translationKey: string }[] = [
 
 const dashboardComponents: Record<DashboardId, React.FC> = {
   overview: OverviewDashboard,
+  acquisition: AcquisitionDashboard,
   scientific: ScientificDashboard,
   users: UsersDashboard,
   sessions: SessionsDashboard,

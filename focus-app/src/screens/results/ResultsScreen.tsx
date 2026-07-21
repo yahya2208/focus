@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useAppDispatch, useAppState } from '../../store/navigation';
 import { calculateFocusScore } from '../../core/engine/scoring';
 import { analyzeConsistency } from '../../core/engine/consistency';
@@ -8,10 +8,11 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { ProgressRing } from '../../components/shared/ProgressRing';
+import { getGlobalTelemetry } from '../../core/telemetry';
 
 export function ResultsScreen() {
   const dispatch = useAppDispatch();
-  const { results } = useAppState();
+  const { results, isQrFlow } = useAppState();
   const { t } = useTranslation();
   const colors = useThemeColors();
 
@@ -28,6 +29,16 @@ export function ResultsScreen() {
     });
     return { consistency, fatigue, score };
   }, [results]);
+
+  useEffect(() => {
+    if (analysis) {
+      getGlobalTelemetry().track('results_viewed', {
+        focusScore: analysis.score.focusScore,
+        grade: analysis.score.grade,
+        isQrFlow,
+      });
+    }
+  }, [analysis, isQrFlow]);
 
   if (!results || !analysis) {
     return (
@@ -46,19 +57,24 @@ export function ResultsScreen() {
     dispatch({ type: 'NAVIGATE', screen: 'home' });
   };
 
+  const handleRegisterCTA = () => {
+    getGlobalTelemetry().track('register_cta_clicked', { source: isQrFlow ? 'qr_results' : 'results' });
+    dispatch({ type: 'NAVIGATE', screen: 'register' });
+  };
+
   return (
     <nav aria-label="Measurement results" style={{ padding: '2rem 1.5rem', maxWidth: '480px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.text, marginBottom: '0.25rem' }}>
           {t('results.title')}
         </h1>
         <p style={{ color: colors.textMuted, fontSize: '0.85rem' }}>
-          {results.validRounds}/{results.totalRounds} {t('game.of')} {results.totalRounds}
+          {results.validRounds}/{results.totalRounds} valid trials
         </p>
       </div>
 
       {/* Score ring */}
-      <Card style={{ marginBottom: '1.25rem', textAlign: 'center', background: colors.gradient, border: `1px solid ${colors.glassBorder}` }}>
+      <Card style={{ marginBottom: '1rem', textAlign: 'center', background: colors.gradient, border: `1px solid ${colors.glassBorder}` }}>
         <ProgressRing
           value={analysis.score.focusScore}
           max={100}
@@ -71,7 +87,7 @@ export function ResultsScreen() {
       </Card>
 
       {/* Best / Average / Consistency cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '1rem' }}>
         <Card padding="0.75rem" style={{ textAlign: 'center', background: colors.glass, border: `1px solid ${colors.glassBorder}` }}>
           <p style={{ color: colors.textMuted, fontSize: '0.65rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 0.25rem' }}>
             {t('results.best')}
@@ -98,37 +114,48 @@ export function ResultsScreen() {
         </Card>
       </div>
 
+      {/* AI Summary */}
+      <Card style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          <span style={{
+            width: 28, height: 28, borderRadius: '8px',
+            background: `${colors.accent}18`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.8rem',
+          }}>🤖</span>
+          <h3 style={{ color: colors.text, margin: 0, fontSize: '0.85rem' }}>AI Summary</h3>
+        </div>
+        <p style={{ color: colors.textSecondary, fontSize: '0.8rem', lineHeight: 1.5, margin: 0 }}>
+          {analysis.score.focusScore >= 80
+            ? `Excellent focus! Your reaction time of ${Math.round(avgRt)}ms with ${analysis.consistency.rating} consistency shows strong cognitive performance.`
+            : analysis.score.focusScore >= 60
+              ? `Good performance. Your average of ${Math.round(avgRt)}ms is solid. Focus on consistency to improve further.`
+              : `Room for improvement. Your average ${Math.round(avgRt)}ms suggests practice could help. Try to stay relaxed between trials.`
+          }
+        </p>
+      </Card>
+
       {/* Detailed stats */}
-      <Card style={{ marginBottom: '1.25rem' }}>
-        <h2 style={{ color: colors.text, marginBottom: '0.75rem', fontSize: '0.9rem' }}>{t('results.reactionTimes')}</h2>
+      <Card style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', color: colors.textSecondary }}>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.mean')}: <strong style={{ color: colors.text }}>{analysis.consistency.meanMs.toFixed(0)}ms</strong></p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.sd')}: <strong style={{ color: colors.text }}>{analysis.consistency.sdMs.toFixed(1)}ms</strong></p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.cv')}: <strong style={{ color: colors.text }}>{(analysis.consistency.cv * 100).toFixed(1)}%</strong></p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.iqr')}: <strong style={{ color: colors.text }}>{analysis.consistency.iqrMs.toFixed(1)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.8rem' }}>{t('results.mean')}: <strong style={{ color: colors.text }}>{analysis.consistency.meanMs.toFixed(0)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.8rem' }}>{t('results.sd')}: <strong style={{ color: colors.text }}>{analysis.consistency.sdMs.toFixed(1)}ms</strong></p>
+          <p style={{ margin: 0, fontSize: '0.8rem' }}>{t('results.cv')}: <strong style={{ color: colors.text }}>{(analysis.consistency.cv * 100).toFixed(1)}%</strong></p>
+          <p style={{ margin: 0, fontSize: '0.8rem' }}>{t('results.iqr')}: <strong style={{ color: colors.text }}>{analysis.consistency.iqrMs.toFixed(1)}ms</strong></p>
         </div>
       </Card>
 
-      <Card style={{ marginBottom: '1.25rem' }}>
-        <h2 style={{ color: colors.text, marginBottom: '0.75rem', fontSize: '0.9rem' }}>{t('results.fatigue')}</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', color: colors.textSecondary }}>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.slope')}: <strong style={{ color: colors.text }}>{analysis.fatigue.slope.toFixed(4)}</strong></p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t('results.detected')}: <strong style={{ color: analysis.fatigue.hasFatigue ? colors.danger : colors.success }}>
-            {analysis.fatigue.hasFatigue ? t('results.yes') : t('results.no')}
-          </strong></p>
-        </div>
-      </Card>
+      {/* PRIMARY CTA — Register Now */}
+      <Button onClick={handleRegisterCTA} style={{ width: '100%', marginBottom: '0.75rem' }}>
+        {t('results.registerNow')}
+      </Button>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-        <Button onClick={saveAndExit}>{t('results.saveAndExit')}</Button>
-        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'share' })}>
-          {t('results.challengeFriend')}
+      {/* Secondary actions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <Button variant="secondary" onClick={saveAndExit} style={{ width: '100%' }}>
+          {t('results.saveAndExit')}
         </Button>
-        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'coach' })}>
-          {t('results.aiCoach')}
-        </Button>
-        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'home' })}>
+        <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'home' })} style={{ width: '100%' }}>
           {t('results.discard')}
         </Button>
       </div>

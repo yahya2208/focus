@@ -82,6 +82,7 @@ const en = {
   'results.no': 'No',
   'results.saveAndExit': 'Save & Exit',
   'results.challengeFriend': 'Challenge a Friend',
+  'results.registerNow': 'Register Now — Improve Your Focus',
   'results.register': 'Register',
   'results.aiCoach': 'AI Coach',
   'results.discard': 'Discard',
@@ -208,6 +209,7 @@ const en = {
   // Research Console
   'research.title': 'Research Console',
   'research.overview': 'Overview',
+  'research.acquisition': 'Acquisition',
   'research.sessions': 'Sessions',
   'research.users': 'Users',
   'research.cohorts': 'Cohorts',
