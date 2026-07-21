@@ -66,13 +66,8 @@ export function canTransition(from: SessionStatus, to: SessionStatus): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-let counter = 0;
-
 export function createSessionId(): string {
-  const ts = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 8);
-  const seq = (counter++).toString(36);
-  return `ses_${ts}_${rand}_${seq}`;
+  return crypto.randomUUID();
 }
 
 export function createSession(draft: SessionDraft): Session {

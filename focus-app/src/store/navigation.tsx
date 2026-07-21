@@ -88,13 +88,14 @@ function navigationReducer(state: AppState, action: NavigationAction): AppState 
     case 'SAVE_SESSION': {
       if (!state.results) return state;
       const session: SessionRecord = {
-        id: `session-${Date.now()}`,
+        id: crypto.randomUUID(),
         gameMode: state.selectedGame ?? 'reaction-light',
         timestamp: Date.now(),
         rawRts: state.results.rawRts,
         correctedRts: state.results.correctedRts,
         score: null,
       };
+      console.log('[DEBUG-1] SAVE_SESSION dispatched:', { id: session.id, gameMode: session.gameMode, rawRtsCount: session.rawRts.length });
       return { ...state, sessions: [...state.sessions, session] };
     }
     case 'RESET':

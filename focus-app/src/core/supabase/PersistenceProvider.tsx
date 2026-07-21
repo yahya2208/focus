@@ -10,14 +10,19 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
   const lastSavedCountRef = useRef(0);
   const dispatchRef = useRef(dispatch);
   dispatchRef.current = dispatch;
-  const deviceRef = useRef<{ deviceId: string; calibrationId: string } | null>(null);
+  const deviceRef = useRef<{ deviceId: string | null; calibrationId: string | null } | null>(null);
 
-  const ensureDeviceAndCalibration = useCallback(async (userId: string): Promise<{ deviceId: string; calibrationId: string }> => {
-    if (deviceRef.current) return deviceRef.current;
+  const ensureDeviceAndCalibration = useCallback(async (userId: string): Promise<{ deviceId: string | null; calibrationId: string | null }> => {
+    if (deviceRef.current) {
+      console.log('[DEBUG-3a] Using cached device/calibration:', deviceRef.current);
+      return deviceRef.current;
+    }
 
     const client = getSupabaseClient();
 
     const deviceProfile: DeviceProfile = collectDeviceProfile();
+
+    let deviceId: string | null = null;
 
     const { data: existingDevice } = await client
       .from('devices')
@@ -26,7 +31,6 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
       .limit(1)
       .maybeSingle();
 
-    let deviceId: string;
     if (existingDevice) {
       deviceId = existingDevice.id;
     } else {
@@ -56,56 +60,60 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         .single();
 
       if (deviceError) {
-        console.error('[Persistence] Device insert failed:', deviceError.message);
-        deviceId = `fallback-device-${Date.now()}`;
+        console.error('[DEBUG-3c] Device INSERT FAILED:', deviceError.message, deviceError.code, deviceError.details);
       } else {
+        console.log('[DEBUG-3c] Device INSERT OK:', newDevice.id);
         deviceId = newDevice.id;
       }
     }
 
-    const cal: CalibrationProfile = calibrationProfile ?? {
-      refreshRate: 60, displayLagMs: 16.667, inputLagMs: 8,
-      confidence: 0.5, platform: 'unknown', timestamp: Date.now(),
-    };
+    let calibrationId: string | null = null;
 
-    const { data: existingCal } = await client
-      .from('calibrations')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('device_id', deviceId)
-      .limit(1)
-      .maybeSingle();
+    if (deviceId) {
+      const cal: CalibrationProfile = calibrationProfile ?? {
+        refreshRate: 60, displayLagMs: 16.667, inputLagMs: 8,
+        confidence: 0.5, platform: 'unknown', timestamp: Date.now(),
+      };
 
-    let calibrationId: string;
-    if (existingCal) {
-      calibrationId = existingCal.id;
-    } else {
-      const { data: newCal, error: calError } = await client
+      const { data: existingCal } = await client
         .from('calibrations')
-        .insert({
-          user_id: userId,
-          device_id: deviceId,
-          refresh_rate: cal.refreshRate,
-          display_lag_ms: cal.displayLagMs,
-          input_lag_ms: cal.inputLagMs,
-          confidence: cal.confidence,
-          platform: cal.platform,
-          browser_name: deviceProfile.browser,
-          created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        })
         .select('id')
-        .single();
+        .eq('user_id', userId)
+        .eq('device_id', deviceId)
+        .limit(1)
+        .maybeSingle();
 
-      if (calError) {
-        console.error('[Persistence] Calibration insert failed:', calError.message);
-        calibrationId = `fallback-calibration-${Date.now()}`;
+      if (existingCal) {
+        calibrationId = existingCal.id;
       } else {
-        calibrationId = newCal.id;
+        const { data: newCal, error: calError } = await client
+          .from('calibrations')
+          .insert({
+            user_id: userId,
+            device_id: deviceId,
+            refresh_rate: cal.refreshRate,
+            display_lag_ms: cal.displayLagMs,
+            input_lag_ms: cal.inputLagMs,
+            confidence: cal.confidence,
+            platform: cal.platform,
+            browser_name: deviceProfile.browser,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .select('id')
+          .single();
+
+        if (calError) {
+          console.error('[DEBUG-3d] Calibration INSERT FAILED:', calError.message, calError.code, calError.details);
+        } else {
+          console.log('[DEBUG-3d] Calibration INSERT OK:', newCal.id);
+          calibrationId = newCal.id;
+        }
       }
     }
 
     deviceRef.current = { deviceId, calibrationId };
+    console.log('[DEBUG-3b] Device/Calibration resolved:', { deviceId, calibrationId });
     return deviceRef.current;
   }, [calibrationProfile]);
 
@@ -116,14 +124,16 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     rawRts: readonly number[];
     correctedRts: readonly number[];
   }) => {
+    console.log('[DEBUG-2] PersistenceProvider received session:', session.id);
     try {
       const client = getSupabaseClient();
       const { data: { user } } = await client.auth.getUser();
 
       if (!user) {
-        console.error('[Persistence] No authenticated user — cannot save session');
+        console.error('[DEBUG-2] No authenticated user — cannot save session');
         return;
       }
+      console.log('[DEBUG-3] Authenticated user:', user.id, 'role:', user.role);
 
       const { deviceId, calibrationId } = await ensureDeviceAndCalibration(user.id);
 
@@ -163,7 +173,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
       const consistencyRating = consistencyScore >= 80 ? 'excellent' : consistencyScore >= 60 ? 'good'
         : consistencyScore >= 40 ? 'average' : 'poor';
 
-      const { error } = await client.from('sessions').upsert({
+      const payload = {
         id: session.id,
         user_id: user.id,
         device_id: deviceId,
@@ -192,12 +202,18 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         updated_at: new Date().toISOString(),
         finished_at: new Date().toISOString(),
         version: '2.0',
-      });
+      };
+
+      console.log('[DEBUG-4] UPSERT payload:', JSON.stringify(payload, null, 2));
+
+      const { data, error } = await client.from('sessions').upsert(payload).select();
+
+      console.log('[DEBUG-5] UPSERT result:', { data, error: error ? { message: error.message, code: error.code, details: error.details, hint: error.hint } : null });
 
       if (error) {
-        console.error('[Persistence] Supabase save failed:', error.message, error);
+        console.error('[DEBUG-5] Supabase save FAILED:', error.message, error);
       } else {
-        console.log('[Persistence] Session saved to Supabase:', session.id, 'user:', user.id);
+        console.log('[DEBUG-5] Session SAVED successfully:', session.id);
       }
     } catch (error) {
       console.error('[Persistence] Error:', error);
@@ -205,9 +221,11 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
   }, [ensureDeviceAndCalibration]);
 
   useEffect(() => {
+    console.log('[DEBUG-0] useEffect fired. sessions.length:', sessions.length, 'lastSaved:', lastSavedCountRef.current);
     if (sessions.length > lastSavedCountRef.current && sessions.length > 0) {
       const newSession = sessions[sessions.length - 1];
       if (newSession) {
+        console.log('[DEBUG-0] Triggering saveSessionToSupabase for:', newSession.id);
         saveSessionToSupabase(newSession);
       }
     }
