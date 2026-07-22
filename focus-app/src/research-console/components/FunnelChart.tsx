@@ -1,3 +1,5 @@
+import { useTranslation } from '../../hooks/useTranslation';
+
 interface FunnelStep {
   label: string;
   value: number;
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export function FunnelChart({ steps, title }: Props) {
+  const { t } = useTranslation();
   const maxVal = steps[0]?.value ?? 1;
   return (
     <div>
@@ -22,7 +25,7 @@ export function FunnelChart({ steps, title }: Props) {
             <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{ width: '140px', textAlign: 'right', flexShrink: 0 }}>
                 <p style={{ margin: 0, fontSize: '0.75rem', color: '#ccc' }}>{step.label}</p>
-                {convFromPrev && <p style={{ margin: 0, fontSize: '0.6rem', color: '#666' }}>{convFromPrev}% from prev</p>}
+                {convFromPrev && <p style={{ margin: 0, fontSize: '0.6rem', color: '#666' }}>{convFromPrev}% {t('campaign.fromPrev')}</p>}
               </div>
               <div style={{ flex: 1, height: '28px', background: '#1e1e2e', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
                 <div style={{

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getSupabaseClient } from '../../../core/supabase/client';
 import { getDataService } from '../../../core/supabase/data-service';
 import QRCodeLib from 'qrcode';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const GOALS = ['brand_awareness', 'customer_acquisition', 'phone_sales', 'store_visitors', 'research', 'other'];
 const TYPES = ['Poster', 'Sticker', 'Flyer', 'Business Card', 'Rollup', 'Social Media', 'NFC', 'Short Link', 'SMS', 'Email', 'Other'];
@@ -15,6 +16,7 @@ const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'auto' as 
 interface Props { onClose: () => void; onCreated: () => void; }
 
 export function CampaignWizard({ onClose, onCreated }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
@@ -103,9 +105,9 @@ export function CampaignWizard({ onClose, onCreated }: Props) {
     return (
       <div style={overlay} onClick={onClose}>
         <div style={modal} onClick={e => e.stopPropagation()}>
-          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: '#22c55e' }}>Campaign Created!</h3>
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: '#22c55e' }}>{t('campaign.created')}</h3>
           <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-            <p style={{ color: '#f0f0f0', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>اختبر تركيزك</p>
+            <p style={{ color: '#f0f0f0', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{t('campaign.focusTest')}</p>
             {result.qrImage && <img src={result.qrImage} alt="QR" style={{ borderRadius: '12px', border: '1px solid #1e1e2e' }} />}
           </div>
           <p style={{ color: '#22c55e', fontSize: '0.9rem', textAlign: 'center', marginBottom: '0.25rem', fontWeight: 600 }}>
@@ -113,10 +115,10 @@ export function CampaignWizard({ onClose, onCreated }: Props) {
           </p>
           <p style={{ color: '#666', fontSize: '0.7rem', textAlign: 'center', wordBreak: 'break-all', marginBottom: '1rem' }}>{result.url}</p>
           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
-            <button onClick={copyUrl} style={btnPrimary}>Copy Link</button>
-            <button onClick={downloadQR} style={{ ...btnPrimary, background: '#22c55e' }} disabled={!result.qrImage}>Download PNG</button>
+            <button onClick={copyUrl} style={btnPrimary}>{t('campaign.copyLink')}</button>
+            <button onClick={downloadQR} style={{ ...btnPrimary, background: '#22c55e' }} disabled={!result.qrImage}>{t('campaign.downloadPNG')}</button>
           </div>
-          <button onClick={onClose} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', background: 'transparent', color: '#888', border: '1px solid #333', cursor: 'pointer' }}>Close</button>
+          <button onClick={onClose} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', background: 'transparent', color: '#888', border: '1px solid #333', cursor: 'pointer' }}>{t('campaign.close')}</button>
         </div>
       </div>
     );
@@ -126,8 +128,8 @@ export function CampaignWizard({ onClose, onCreated }: Props) {
     <div style={overlay} onClick={onClose}>
       <div style={modal} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>New Campaign</h3>
-          <span style={{ color: '#6366f1', fontSize: '0.8rem' }}>Step {step} of 3</span>
+          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{t('campaign.new')}</h3>
+          <span style={{ color: '#6366f1', fontSize: '0.8rem' }}>{t('campaign.step')} {step} {t('campaign.of')} 3</span>
         </div>
         <div style={{ display: 'flex', gap: '4px', marginBottom: '1.25rem' }}>
           {[1, 2, 3].map(s => (
@@ -138,18 +140,18 @@ export function CampaignWizard({ onClose, onCreated }: Props) {
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div>
-              <label style={labelStyle}>Campaign Name *</label>
-              <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. University Entrance, Mall July" autoFocus />
+              <label style={labelStyle}>{t('campaign.name')} *</label>
+              <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder={t('campaign.namePlaceholder')} autoFocus />
             </div>
             <div>
-              <label style={labelStyle}>Campaign Goal</label>
+              <label style={labelStyle}>{t('campaign.goal')}</label>
               <select style={selectStyle} value={goal} onChange={e => setGoal(e.target.value)}>
-                <option value="">Select goal...</option>
+                <option value="">{t('campaign.goal')}</option>
                 {GOALS.map(g => <option key={g} value={g}>{g.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Campaign Type</label>
+              <label style={labelStyle}>{t('campaign.type')}</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
                 {TYPES.map(t => (
                   <button key={t} onClick={() => setCampaignType(t)} style={{
@@ -167,48 +169,48 @@ export function CampaignWizard({ onClose, onCreated }: Props) {
 
         {step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div><label style={labelStyle}>Country</label><input style={inputStyle} value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g. Algeria" /></div>
-            <div><label style={labelStyle}>State / Province</label><input style={inputStyle} value={stateName} onChange={e => setStateName(e.target.value)} placeholder="e.g. Oran" /></div>
-            <div><label style={labelStyle}>City</label><input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="e.g. Es Senia" /></div>
-            <div><label style={labelStyle}>District</label><input style={inputStyle} value={district} onChange={e => setDistrict(e.target.value)} placeholder="e.g. University Gate" /></div>
-            <div><label style={labelStyle}>Venue</label><input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. Gate A, 2nd Floor, by the cashier" /></div>
+            <div><label style={labelStyle}>{t('campaign.country')}</label><input style={inputStyle} value={country} onChange={e => setCountry(e.target.value)} placeholder={t('campaign.country')} /></div>
+            <div><label style={labelStyle}>{t('campaign.state')}</label><input style={inputStyle} value={stateName} onChange={e => setStateName(e.target.value)} placeholder={t('campaign.state')} /></div>
+            <div><label style={labelStyle}>{t('campaign.city')}</label><input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder={t('campaign.city')} /></div>
+            <div><label style={labelStyle}>{t('campaign.district')}</label><input style={inputStyle} value={district} onChange={e => setDistrict(e.target.value)} placeholder={t('campaign.district')} /></div>
+            <div><label style={labelStyle}>{t('campaign.venue')}</label><input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder={t('campaign.venuePlaceholder')} /></div>
           </div>
         )}
 
         {step === 3 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div><label style={labelStyle}>Description (optional)</label><textarea style={{ ...inputStyle, height: '60px', resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} placeholder="Campaign description..." /></div>
-            <div><label style={labelStyle}>Notes (optional)</label><textarea style={{ ...inputStyle, height: '60px', resize: 'vertical' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Internal notes..." /></div>
+            <div><label style={labelStyle}>{t('campaign.description')}</label><textarea style={{ ...inputStyle, height: '60px', resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} placeholder={t('campaign.descriptionPlaceholder')} /></div>
+            <div><label style={labelStyle}>{t('campaign.notes')}</label><textarea style={{ ...inputStyle, height: '60px', resize: 'vertical' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('campaign.notesPlaceholder')} /></div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <div style={{ flex: 2 }}><label style={labelStyle}>Budget (optional)</label><input style={inputStyle} type="number" value={budget} onChange={e => setBudget(e.target.value)} placeholder="0" /></div>
-              <div style={{ flex: 1 }}><label style={labelStyle}>Currency</label><select style={selectStyle} value={budgetCurrency} onChange={e => setBudgetCurrency(e.target.value)}>{CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+              <div style={{ flex: 2 }}><label style={labelStyle}>{t('campaign.budget')}</label><input style={inputStyle} type="number" value={budget} onChange={e => setBudget(e.target.value)} placeholder="0" /></div>
+              <div style={{ flex: 1 }}><label style={labelStyle}>{t('campaign.currency')}</label><select style={selectStyle} value={budgetCurrency} onChange={e => setBudgetCurrency(e.target.value)}>{CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
             </div>
             <div style={{ padding: '0.75rem', background: '#1e1e2e', borderRadius: '8px', fontSize: '0.8rem' }}>
-              <p style={{ margin: '0 0 0.3rem', color: '#f0f0f0', fontWeight: 600 }}>Review</p>
-              <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>Name:</strong> {name}</p>
-              {goal && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>Goal:</strong> {goal.replace(/_/g, ' ')}</p>}
-              {campaignType && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>Type:</strong> {campaignType}</p>}
-              <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>Location:</strong> {[venue, district, city, stateName, country].filter(Boolean).join(', ') || '-'}</p>
-              {budget && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>Budget:</strong> {budget} {budgetCurrency}</p>}
+              <p style={{ margin: '0 0 0.3rem', color: '#f0f0f0', fontWeight: 600 }}>{t('campaign.review')}</p>
+              <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>{t('campaign.name')}:</strong> {name}</p>
+              {goal && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>{t('campaign.goal')}:</strong> {goal.replace(/_/g, ' ')}</p>}
+              {campaignType && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>{t('campaign.type')}:</strong> {campaignType}</p>}
+              <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>{t('campaign.city')}:</strong> {[venue, district, city, stateName, country].filter(Boolean).join(', ') || '-'}</p>
+              {budget && <p style={{ margin: 0, color: '#888' }}><strong style={{ color: '#ccc' }}>{t('campaign.budget')}:</strong> {budget} {budgetCurrency}</p>}
             </div>
           </div>
         )}
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
-          {step > 1 && <button onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', background: '#1e1e2e', color: '#888', border: '1px solid #333', cursor: 'pointer' }}>Back</button>}
+          {step > 1 && <button onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', background: '#1e1e2e', color: '#888', border: '1px solid #333', cursor: 'pointer' }}>{t('campaign.backBtn')}</button>}
           {step < 3 ? (
             <button onClick={() => setStep(s => s + 1)} disabled={!canNext()} style={{
               flex: 1, padding: '0.6rem', borderRadius: '8px',
               background: canNext() ? '#6366f1' : '#333',
               color: canNext() ? '#fff' : '#666',
               border: 'none', cursor: canNext() ? 'pointer' : 'not-allowed', fontWeight: 600,
-            }}>Next</button>
+            }}>{t('campaign.next')}</button>
           ) : (
             <button onClick={handleCreate} disabled={saving} style={{
               flex: 1, padding: '0.6rem', borderRadius: '8px',
               background: saving ? '#333' : '#22c55e',
               color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer', fontWeight: 600,
-            }}>{saving ? 'Creating...' : 'Create Campaign'}</button>
+            }}>{saving ? t('campaign.creating') : t('campaign.createCampaign')}</button>
           )}
         </div>
       </div>

@@ -5,6 +5,7 @@ import { FunnelChart } from '../../../research-console/components/FunnelChart';
 import { HeatmapChart } from '../../../research-console/components/HeatmapChart';
 import { BarChart, LineChart } from '../../../research-console/components/charts/Charts';
 import { exportCSV, exportExcel } from '../../../research-console/components/ExportUtils';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface Props {
   campaign: Campaign;
@@ -14,6 +15,7 @@ interface Props {
 interface HourlyData { hour: number; count: number; }
 
 export function CampaignAnalytics({ campaign, qrCodes }: Props) {
+  const { t } = useTranslation();
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [dailyData, setDailyData] = useState<{ label: string; value: number }[]>([]);
   const [topCampaigns, setTopCampaigns] = useState<{ name: string; scans: number; conversion: number }[]>([]);
@@ -70,10 +72,10 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
   }, [campaign.id]);
 
   const funnelSteps = [
-    { label: 'QR Scanned', value: stats.scans, color: '#6366f1' },
-    { label: 'Game Started', value: stats.started, color: '#3b82f6' },
-    { label: 'Game Finished', value: stats.completed, color: '#22c55e' },
-    { label: 'Registered', value: stats.registered, color: '#f59e0b' },
+    { label: t('campaign.totalScans'), value: stats.scans, color: '#6366f1' },
+    { label: t('campaign.gameStarted'), value: stats.started, color: '#3b82f6' },
+    { label: t('campaign.gameFinished'), value: stats.completed, color: '#22c55e' },
+    { label: t('campaign.registered'), value: stats.registered, color: '#f59e0b' },
   ];
 
   const peakHour = hourlyData.reduce((best, h) => h.count > best.count ? h : best, { hour: 0, count: 0 });
@@ -88,14 +90,14 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
         {[
-          { label: 'Total Scans', value: stats.scans, color: '#6366f1' },
-          { label: 'Game Started', value: stats.started, color: '#3b82f6' },
-          { label: 'Game Finished', value: stats.completed, color: '#22c55e' },
-          { label: 'Registered', value: stats.registered, color: '#f59e0b' },
-          { label: 'Completion %', value: stats.scans > 0 ? `${((stats.completed / stats.scans) * 100).toFixed(1)}%` : '0%', color: '#22c55e' },
-          { label: 'Conversion %', value: stats.scans > 0 ? `${((stats.registered / stats.scans) * 100).toFixed(1)}%` : '0%', color: '#f59e0b' },
-          { label: 'Peak Hour', value: `${peakHour.count > 0 ? peakHour.hour + ':00' : '-'}`, color: '#ef4444' },
-          { label: 'Unique QRs', value: qrCodes.length, color: '#8b5cf6' },
+          { label: t('campaign.totalScans'), value: stats.scans, color: '#6366f1' },
+          { label: t('campaign.gameStarted'), value: stats.started, color: '#3b82f6' },
+          { label: t('campaign.gameFinished'), value: stats.completed, color: '#22c55e' },
+          { label: t('campaign.registered'), value: stats.registered, color: '#f59e0b' },
+          { label: t('campaign.completion') + ' %', value: stats.scans > 0 ? `${((stats.completed / stats.scans) * 100).toFixed(1)}%` : '0%', color: '#22c55e' },
+          { label: t('campaign.conversion') + ' %', value: stats.scans > 0 ? `${((stats.registered / stats.scans) * 100).toFixed(1)}%` : '0%', color: '#f59e0b' },
+          { label: t('campaign.peakHour'), value: `${peakHour.count > 0 ? peakHour.hour + ':00' : '-'}`, color: '#ef4444' },
+          { label: t('campaign.uniqueQRs'), value: qrCodes.length, color: '#8b5cf6' },
         ].map(s => (
           <div key={s.label} style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '10px', padding: '0.75rem' }}>
             <p style={{ margin: 0, fontSize: '0.65rem', color: '#666', textTransform: 'uppercase' as const }}>{s.label}</p>
@@ -106,26 +108,26 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-          <FunnelChart steps={funnelSteps} title="Conversion Funnel" />
+          <FunnelChart steps={funnelSteps} title={t('campaign.conversionFunnel')} />
         </div>
         <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-          <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>Peak Scan Time</p>
+          <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{t('campaign.peakScanTime')}</p>
           <p style={{ color: '#ef4444', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>{peakHour.count > 0 ? `${peakHour.hour}:00` : '-'}</p>
           <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.25rem 0 0.75rem' }}>{peakHour.count} scans at peak</p>
-          <BarChart data={hourlyData.filter((_, i) => i % 3 === 0).map(h => ({ label: `${h.hour}`, value: h.count, color: h.hour === peakHour.hour ? '#ef4444' : '#6366f1' }))} title="Scans by Hour" />
+          <BarChart data={hourlyData.filter((_, i) => i % 3 === 0).map(h => ({ label: `${h.hour}`, value: h.count, color: h.hour === peakHour.hour ? '#ef4444' : '#6366f1' }))} title={t('campaign.scansByHour')} />
         </div>
       </div>
 
       {dailyData.length > 0 && (
         <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-          <LineChart data={dailyData} title="Scans per Day" />
+          <LineChart data={dailyData} title={t('campaign.scansPerDay')} />
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         {Object.keys(deviceStats).length > 0 && (
           <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-            <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>Top Devices</p>
+            <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{t('campaign.topDevices')}</p>
             {Object.entries(deviceStats).sort(([, a], [, b]) => b - a).slice(0, 5).map(([dev, count]) => (
               <div key={dev} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px solid #1e1e2e', fontSize: '0.8rem' }}>
                 <span style={{ color: '#ccc' }}>{dev}</span>
@@ -136,7 +138,7 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
         )}
         {Object.keys(browserStats).length > 0 && (
           <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-            <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>Top Browsers</p>
+            <p style={{ color: '#f0f0f0', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{t('campaign.topBrowsers')}</p>
             {Object.entries(browserStats).sort(([, a], [, b]) => b - a).map(([br, count]) => (
               <div key={br} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px solid #1e1e2e', fontSize: '0.8rem' }}>
                 <span style={{ color: '#ccc' }}>{br}</span>
@@ -148,8 +150,8 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button onClick={exportData} style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' }}>Export CSV</button>
-        <button onClick={() => exportExcel(`${campaign.name}-analytics`, ['Hour', 'Scans'], hourlyData.map(h => [`${h.hour}:00`, h.count]))} style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' }}>Export Excel</button>
+        <button onClick={exportData} style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' }}>{t('campaign.exportCSV')}</button>
+        <button onClick={() => exportExcel(`${campaign.name}-analytics`, ['Hour', 'Scans'], hourlyData.map(h => [`${h.hour}:00`, h.count]))} style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' }}>{t('campaign.exportExcel')}</button>
       </div>
     </div>
   );

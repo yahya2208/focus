@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import QRCodeLib from 'qrcode';
 import type { QRConfig } from '../../../core/supabase/data-service';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const CARD: React.CSSProperties = { background: '#1e1e2e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem' };
 const SECTION_TITLE: React.CSSProperties = { color: '#888', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem', marginTop: '1.1rem' };
@@ -106,6 +107,7 @@ function escapeXml(s: string): string {
 }
 
 export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesignerProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fg, setFg] = useState(qrConfig?.foreground ?? '#6366f1');
   const [bg, setBg] = useState(qrConfig?.background ?? '#ffffff');
@@ -115,7 +117,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
   const [frameMode, setFrameMode] = useState<'none' | 'preset' | 'custom'>(
     qrConfig?.frame === 'preset' ? 'preset' : qrConfig?.frameText ? 'custom' : 'none'
   );
-  const [frameText, setFrameText] = useState(qrConfig?.frameText ?? 'اختبر تركيزك');
+  const [frameText, setFrameText] = useState(qrConfig?.frameText ?? t('campaign.focusTest'));
   const [logoOption, setLogoOption] = useState<'default' | 'upload' | 'none'>(qrConfig?.logoOption ?? 'default');
   const [logoUrl, setLogoUrl] = useState(qrConfig?.logoUrl ?? '');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
@@ -306,7 +308,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', maxHeight: 'calc(100vh - 3rem)' }}>
 
         <div style={{ ...CARD }}>
-          <div style={SECTION_TITLE}>Templates</div>
+          <div style={SECTION_TITLE}>{t('campaign.templates')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
             {TEMPLATES.map((t) => {
               const active = templateId === t.id;
@@ -352,10 +354,10 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
         </div>
 
         <div style={{ ...CARD }}>
-          <div style={SECTION_TITLE}>Colors</div>
+          <div style={SECTION_TITLE}>{t('campaign.foreground')}</div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             <div style={{ flex: 1 }}>
-              <label style={LABEL}>Foreground</label>
+              <label style={LABEL}>{t('campaign.foreground')}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
                   type="color"
@@ -372,7 +374,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
               </div>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={LABEL}>Background</label>
+              <label style={LABEL}>{t('campaign.background')}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
                   type="color"
@@ -392,10 +394,10 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
         </div>
 
         <div style={{ ...CARD }}>
-          <div style={SECTION_TITLE}>Style</div>
+          <div style={SECTION_TITLE}>{t('campaign.style')}</div>
           <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
             <div>
-              <label style={LABEL}>Modules</label>
+              <label style={LABEL}>{t('campaign.style')}</label>
               <div style={{ display: 'flex', gap: '0' }}>
                 <button
                   onClick={() => setRounded(true)}
@@ -410,7 +412,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
                     fontWeight: rounded ? 600 : 400,
                   }}
                 >
-                  Rounded
+                  {t('campaign.rounded')}
                 </button>
                 <button
                   onClick={() => setRounded(false)}
@@ -426,12 +428,12 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
                     fontWeight: !rounded ? 600 : 400,
                   }}
                 >
-                  Square
+                  {t('campaign.square')}
                 </button>
               </div>
             </div>
             <div>
-              <label style={LABEL}>Eyes</label>
+              <label style={LABEL}>{t('campaign.eyeStyle')}</label>
               <div style={{ display: 'flex', gap: '0' }}>
                 <button
                   onClick={() => setEyeRounded(true)}
@@ -446,7 +448,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
                     fontWeight: eyeRounded ? 600 : 400,
                   }}
                 >
-                  Rounded
+                  {t('campaign.rounded')}
                 </button>
                 <button
                   onClick={() => setEyeRounded(false)}
@@ -462,7 +464,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
                     fontWeight: !eyeRounded ? 600 : 400,
                   }}
                 >
-                  Square
+                  {t('campaign.square')}
                 </button>
               </div>
             </div>
@@ -470,12 +472,12 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
         </div>
 
         <div style={{ ...CARD }}>
-          <div style={SECTION_TITLE}>Frame</div>
+          <div style={SECTION_TITLE}>{t('campaign.frame')}</div>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
             {([
-              { value: 'none' as const, label: 'None' },
-              { value: 'preset' as const, label: 'اختبر تركيزك' },
-              { value: 'custom' as const, label: 'Custom' },
+              { value: 'none' as const, label: t('campaign.frameNone') },
+              { value: 'preset' as const, label: t('campaign.focusTest') },
+              { value: 'custom' as const, label: t('campaign.frameCustom') },
             ]).map((opt) => (
               <button
                 key={opt.value}
@@ -507,12 +509,12 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
         </div>
 
         <div style={{ ...CARD }}>
-          <div style={SECTION_TITLE}>Logo</div>
+          <div style={SECTION_TITLE}>{t('campaign.logo')}</div>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
             {([
-              { value: 'default' as const, label: 'Default' },
-              { value: 'upload' as const, label: 'Upload' },
-              { value: 'none' as const, label: 'None' },
+              { value: 'default' as const, label: t('campaign.logoDefault') },
+              { value: 'upload' as const, label: t('campaign.logoUpload') },
+              { value: 'none' as const, label: t('campaign.logoNone') },
             ]).map((opt) => (
               <button
                 key={opt.value}
@@ -561,14 +563,14 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
 
         {onSave && (
           <button onClick={handleSave} style={{ ...btnPrimary, padding: '0.65rem 1.5rem', fontSize: '0.9rem', alignSelf: 'flex-start' }}>
-            Save Configuration
+            {t('campaign.save')} {t('campaign.designerTitle')}
           </button>
         )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
         <div style={{ ...CARD, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={SECTION_TITLE}>Preview</div>
+          <div style={SECTION_TITLE}>{t('campaign.preview')}</div>
           <div style={{ background: '#0a0a0f', borderRadius: '12px', padding: '1.5rem', display: 'inline-block', marginTop: '0.25rem' }}>
             <canvas
               ref={canvasRef}
@@ -598,7 +600,7 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 1v9M8 10L4.5 6.5M8 10l3.5-3.5M2 12v2h12v-2" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Download PNG
+            {t('campaign.downloadPNG')}
           </button>
           <button
             onClick={handleDownloadSvg}
@@ -615,18 +617,18 @@ export function QRDesigner({ campaignId, campaignUrl, qrConfig, onSave }: QRDesi
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 1v9M8 10L4.5 6.5M8 10l3.5-3.5M2 12v2h12v-2" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Download SVG
+            {t('campaign.downloadSVG')}
           </button>
         </div>
 
         <div style={{ ...CARD, width: '100%' }}>
-          <div style={SECTION_TITLE}>Current Configuration</div>
+          <div style={SECTION_TITLE}>{t('campaign.designerTitle')}</div>
           <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#666', lineHeight: 1.6, wordBreak: 'break-all' }}>
             <div>Template: <span style={{ color: '#aaa' }}>{templateId}</span></div>
             <div>FG: <span style={{ color: fg }}>{fg}</span> | BG: <span style={{ color: bg }}>{bg}</span></div>
-            <div>Modules: <span style={{ color: '#aaa' }}>{rounded ? 'Rounded' : 'Square'}</span> | Eyes: <span style={{ color: '#aaa' }}>{eyeRounded ? 'Rounded' : 'Square'}</span></div>
-            <div>Frame: <span style={{ color: '#aaa' }}>{frameMode === 'none' ? 'None' : frameMode === 'preset' ? 'اختبر تركيزك' : frameText}</span></div>
-            <div>Logo: <span style={{ color: '#aaa' }}>{logoOption}</span></div>
+            <div>{t('campaign.style')}: <span style={{ color: '#aaa' }}>{rounded ? t('campaign.rounded') : t('campaign.square')}</span> | {t('campaign.eyeStyle')}: <span style={{ color: '#aaa' }}>{eyeRounded ? t('campaign.rounded') : t('campaign.square')}</span></div>
+            <div>{t('campaign.frame')}: <span style={{ color: '#aaa' }}>{frameMode === 'none' ? t('campaign.frameNone') : frameMode === 'preset' ? t('campaign.focusTest') : frameText}</span></div>
+            <div>{t('campaign.logo')}: <span style={{ color: '#aaa' }}>{logoOption}</span></div>
           </div>
         </div>
       </div>

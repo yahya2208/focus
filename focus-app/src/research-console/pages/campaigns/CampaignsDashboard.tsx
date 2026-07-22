@@ -8,6 +8,7 @@ import { getSupabaseClient } from '../../../core/supabase/client';
 import { getDataService, type Campaign, type QRCode } from '../../../core/supabase/data-service';
 import { CampaignWizard } from './CampaignWizard';
 import { CampaignDetailView } from './CampaignDetailView';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface CampaignRow extends Campaign {
   scan_count: number;
@@ -26,6 +27,7 @@ const btnDanger: React.CSSProperties = { padding: '0.4rem 0.8rem', borderRadius:
 const btnSmall: React.CSSProperties = { padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' };
 
 export function CampaignsDashboard() {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<DashboardId>('campaigns');
   const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
@@ -64,7 +66,7 @@ export function CampaignsDashboard() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleArchive = async (id: string) => {
-    if (!confirm('Archive this campaign? It can be restored later.')) return;
+    if (!confirm(t('campaign.archiveConfirm'))) return;
     const ds = getDataService(getSupabaseClient());
     await ds.deleteCampaign(id);
     setSelectedId(null);
@@ -96,17 +98,17 @@ export function CampaignsDashboard() {
   return (
     <ResearchLayout activeDashboard={dashboard} onNavigate={setDashboard}>
       <DashboardHeader
-        title="Campaigns"
-        subtitle={`${campaigns.length} campaigns`}
-        actions={<button onClick={() => setShowWizard(true)} style={btnPrimary}>+ New Campaign</button>}
+        title={t('campaign.title')}
+        subtitle={`${campaigns.length} ${t('campaign.title').toLowerCase()}`}
+        actions={<button onClick={() => setShowWizard(true)} style={btnPrimary}>+ {t('campaign.new').replace('+ ', '')}</button>}
       />
       <FilterBar filters={filters} onFilterChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={() => setFilters(createEmptyFilters())} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-        <StatCard label="Campaigns" value={campaigns.length} color="#6366f1" />
-        <StatCard label="Scans" value={totalScans} color="#22c55e" />
-        <StatCard label="Completed" value={totalCompleted} color="#3b82f6" />
-        <StatCard label="Registered" value={totalRegistered} color="#f59e0b" />
+        <StatCard label={t('campaign.title')} value={campaigns.length} color="#6366f1" />
+        <StatCard label={t('campaign.scans')} value={totalScans} color="#22c55e" />
+        <StatCard label={t('campaign.completed')} value={totalCompleted} color="#3b82f6" />
+        <StatCard label={t('campaign.registered')} value={totalRegistered} color="#f59e0b" />
       </div>
 
       <div style={{ display: 'flex', gap: '4px', marginBottom: '0.75rem' }}>
@@ -117,7 +119,7 @@ export function CampaignsDashboard() {
             color: statusFilter === s ? '#fff' : '#888',
             border: `1px solid ${statusFilter === s ? '#6366f1' : '#333'}`,
             cursor: 'pointer',
-          }}>{s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
+          }}>{t(`campaign.${s}` as any)}</button>
         ))}
       </div>
 
@@ -126,16 +128,16 @@ export function CampaignsDashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={TH_STYLE}>Campaign</th>
-                <th style={TH_STYLE}>Goal</th>
-                <th style={TH_STYLE}>Type</th>
-                <th style={TH_STYLE}>Location</th>
-                <th style={TH_STYLE}>Scans</th>
-                <th style={TH_STYLE}>Completed</th>
-                <th style={TH_STYLE}>Registered</th>
-                <th style={TH_STYLE}>Conversion</th>
-                <th style={TH_STYLE}>Status</th>
-                <th style={TH_STYLE}>Actions</th>
+                <th style={TH_STYLE}>{t('campaign.name')}</th>
+                <th style={TH_STYLE}>{t('campaign.goal')}</th>
+                <th style={TH_STYLE}>{t('campaign.type')}</th>
+                <th style={TH_STYLE}>{t('campaign.city')}</th>
+                <th style={TH_STYLE}>{t('campaign.scans')}</th>
+                <th style={TH_STYLE}>{t('campaign.completed')}</th>
+                <th style={TH_STYLE}>{t('campaign.registered')}</th>
+                <th style={TH_STYLE}>{t('campaign.conversion')}</th>
+                <th style={TH_STYLE}>{t('campaign.status')}</th>
+                <th style={TH_STYLE}></th>
               </tr>
             </thead>
             <tbody>
@@ -160,9 +162,9 @@ export function CampaignsDashboard() {
                     <td style={ROW_STYLE}>
                       <div style={{ display: 'flex', gap: '0.3rem' }}>
                         {status === 'archived' ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleRestore(c.id!); }} style={btnSmall}>Restore</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleRestore(c.id!); }} style={btnSmall}>{t('campaign.restore')}</button>
                         ) : (
-                          <button onClick={(e) => { e.stopPropagation(); handleArchive(c.id!); }} style={btnDanger}>Archive</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleArchive(c.id!); }} style={btnDanger}>{t('campaign.archive')}</button>
                         )}
                       </div>
                     </td>
@@ -170,7 +172,7 @@ export function CampaignsDashboard() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={10} style={{ padding: '2rem', textAlign: 'center', color: '#555' }}>No campaigns found. Click "+ New Campaign" to create one.</td></tr>
+                <tr><td colSpan={10} style={{ padding: '2rem', textAlign: 'center', color: '#555' }}>{t('campaign.noCampaigns')}</td></tr>
               )}
             </tbody>
           </table>
