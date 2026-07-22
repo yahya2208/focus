@@ -99,7 +99,10 @@ export function HomeScreen() {
           overflow: 'hidden',
           cursor: 'pointer',
         }}
-        onClick={() => dispatch({ type: 'NAVIGATE', screen: 'library' })}
+        onClick={() => {
+          dispatch({ type: 'SELECT_GAME', gameMode: 'reaction-light' });
+          dispatch({ type: 'NAVIGATE', screen: 'countdown' });
+        }}
         role="button"
         tabIndex={0}
       >
@@ -169,7 +172,10 @@ export function HomeScreen() {
       </Card>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <Button onClick={() => dispatch({ type: 'NAVIGATE', screen: 'library' })}>
+        <Button onClick={() => {
+          dispatch({ type: 'SELECT_GAME', gameMode: 'reaction-light' });
+          dispatch({ type: 'NAVIGATE', screen: 'countdown' });
+        }}>
           {t('home.startMeasurement')}
         </Button>
         <Button variant="secondary" onClick={() => dispatch({ type: 'NAVIGATE', screen: 'phone-services' })} style={{ width: '100%' }}>

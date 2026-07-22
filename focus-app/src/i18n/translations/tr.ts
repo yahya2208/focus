@@ -12,7 +12,7 @@ const tr: Record<TranslationKey, string> = {
   'home.focusDescription': 'Son oturumlarınıza göre bilişsel performans puanınız',
   'home.aiAdviceTitle': 'Tavsiye mi lazım?',
   'home.aiAdviceSubtitle': 'Yapay zeka koçunuza sorun',
-  'home.startMeasurement': 'Değerlendirmeye Başla',
+  'home.startMeasurement': 'Oyna',
   'home.sessionHistory': 'Geçmiş',
   'home.settings': 'Ayarlar',
   'home.about': 'Hakkında',
@@ -42,7 +42,7 @@ const tr: Record<TranslationKey, string> = {
   'calibration.complete': 'Kalibrasyon tamamlandı! Oyun başlıyor...',
   'calibration.samples': 'örnek',
 
-  'countdown.getReady': 'Hazır olun...',
+  'countdown.getReady': 'Işığı izleyin...',
   'countdown.go': 'Başla!',
 
   'game.waiting': 'Bekleyin...',

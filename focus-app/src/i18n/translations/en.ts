@@ -12,7 +12,7 @@ const en = {
   'home.focusDescription': 'Your cognitive performance score based on recent sessions',
   'home.aiAdviceTitle': 'Need advice?',
   'home.aiAdviceSubtitle': 'Ask your AI coach anything',
-  'home.startMeasurement': 'Start Assessment',
+  'home.startMeasurement': 'Play',
   'home.sessionHistory': 'History',
   'home.settings': 'Settings',
   'home.about': 'About',
@@ -46,7 +46,7 @@ const en = {
   'calibration.samples': 'samples',
 
   // Countdown
-  'countdown.getReady': 'Get ready...',
+  'countdown.getReady': 'Watch for the light...',
   'countdown.go': 'Go!',
 
   // Game

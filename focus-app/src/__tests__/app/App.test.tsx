@@ -6,12 +6,12 @@ describe('App', () => {
   it('should render the home screen by default', () => {
     render(<App />);
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Start Assessment' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeTruthy();
   });
 
   it('should render all home screen buttons', () => {
     render(<App />);
-    expect(screen.getByRole('button', { name: 'Start Assessment' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'History' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();

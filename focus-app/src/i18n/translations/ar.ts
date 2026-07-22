@@ -12,7 +12,7 @@ const ar: Record<TranslationKey, string> = {
   'home.focusDescription': 'نتيجة الأداء المعرفي بناءً على الجلسات الأخيرة',
   'home.aiAdviceTitle': 'تحتاج نصيحة؟',
   'home.aiAdviceSubtitle': 'اسأل مدربك الذكي أي شيء',
-  'home.startMeasurement': 'ابدأ التقييم',
+  'home.startMeasurement': 'إلعب',
   'home.sessionHistory': 'السجل',
   'home.settings': 'الإعدادات',
   'home.about': 'حول',
@@ -42,7 +42,7 @@ const ar: Record<TranslationKey, string> = {
   'calibration.complete': 'اكتمل الضبط! بدء اللعبة...',
   'calibration.samples': 'عينات',
 
-  'countdown.getReady': 'استعد...',
+  'countdown.getReady': 'انتبه للمبة...',
   'countdown.go': 'انطلق!',
 
   'game.waiting': 'انتظر...',

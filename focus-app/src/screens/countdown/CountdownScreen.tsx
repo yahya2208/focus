@@ -11,7 +11,7 @@ export function CountdownScreen() {
 
   useEffect(() => {
     if (count <= 0) {
-      dispatch({ type: 'NAVIGATE', screen: 'calibration' });
+      dispatch({ type: 'NAVIGATE', screen: 'game' });
       return;
     }
     const timer = setTimeout(() => setCount(count - 1), 1000);
