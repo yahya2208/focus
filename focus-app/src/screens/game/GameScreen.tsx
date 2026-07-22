@@ -93,7 +93,7 @@ const KEYFRAMES_CSS = `
 @keyframes bestPulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
 `;
 
-function GlassLamp({ visible, onRef }: { visible: boolean; onRef: (el: HTMLButtonElement | null) => void }) {
+function GlassLamp({ visible, xPct, yPct, onRef }: { visible: boolean; xPct: number; yPct: number; onRef: (el: HTMLButtonElement | null) => void }) {
   const colors = useThemeColors();
   if (!visible) return null;
 
@@ -103,7 +103,7 @@ function GlassLamp({ visible, onRef }: { visible: boolean; onRef: (el: HTMLButto
       aria-label="Tap the lamp"
       style={{
         position: 'absolute',
-        left: '50%', top: '50%',
+        left: `${xPct}%`, top: `${yPct}%`,
         transform: 'translate(-50%, -50%)',
         width: LAMP_SIZE, height: LAMP_SIZE,
         borderRadius: '50%', border: 'none', padding: 0,
@@ -370,6 +370,8 @@ export function GameScreen() {
         {/* Glass Lamp positioned at current target */}
         <GlassLamp
           visible={phase === 'visible'}
+          xPct={lp.x}
+          yPct={lp.y}
           onRef={(el) => { lampElRef.current = el; }}
         />
 
