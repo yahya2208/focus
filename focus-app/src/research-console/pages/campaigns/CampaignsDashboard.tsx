@@ -178,7 +178,9 @@ export function CampaignsDashboard() {
 
 function CampaignDetail({ campaign: c }: { campaign: CampaignRow }) {
   const [qrImage, setQrImage] = useState<string | null>(null);
-  const url = `${window.location.origin}/?campaign=${encodeURIComponent(c.name.toLowerCase().replace(/\s+/g, '-'))}`;
+  const slug = c.id || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const basePath = import.meta.env.BASE_URL || '/';
+  const url = `${window.location.origin}${basePath}?campaign=${encodeURIComponent(slug)}`;
 
   useEffect(() => {
     QRCodeLib.toDataURL(url, { width: 200, margin: 2, color: { dark: '#f0f0f0', light: '#0a0a0f' } })
@@ -271,9 +273,6 @@ function CampaignWizard({ onClose, onCreated }: { onClose: () => void; onCreated
     setSaving(true);
     const client = getSupabaseClient();
     const ds = getDataService(client);
-    const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const campaignUrl = `${window.location.origin}/?campaign=${slug}`;
-
     const campaign = await ds.createCampaign({
       name: name.trim(),
       location_type: locationType,
@@ -286,6 +285,10 @@ function CampaignWizard({ onClose, onCreated }: { onClose: () => void; onCreated
     });
 
     if (!campaign) { setSaving(false); return; }
+
+    const slug = (campaign.id || name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+    const basePath = import.meta.env.BASE_URL || '/';
+    const campaignUrl = `${window.location.origin}${basePath}?campaign=${slug}`;
 
     await ds.createQRCode({
       campaign_id: campaign.id!,

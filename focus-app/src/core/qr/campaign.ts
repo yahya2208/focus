@@ -51,7 +51,9 @@ export function serializeCampaignParams(params: CampaignParams): string {
 }
 
 export function hasCampaign(params: CampaignParams): boolean {
-  return params.campaign !== null && params.campaign.length > 0;
+  if (params.campaign === null || params.campaign.length === 0) return false;
+  const cleaned = params.campaign.replace(/-/g, '').trim();
+  return cleaned.length > 0;
 }
 
 export interface CampaignRecord {
