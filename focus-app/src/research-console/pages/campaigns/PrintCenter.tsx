@@ -62,7 +62,7 @@ export function PrintCenter({ campaignName, campaignUrl, qrImage, logoUrl }: Pro
       }}>
         {Array.from({ length: cols * rows }).map((_, i) => (
           <div key={i} style={{ width: cellW, height: cellH, boxSizing: 'border-box' }}>
-            {renderCard(qrImage, cellW, cellH, isSticker)}
+            {renderCard(qrImage ?? null, cellW, cellH, isSticker)}
           </div>
         ))}
       </div>
@@ -142,10 +142,6 @@ export function PrintCenter({ campaignName, campaignUrl, qrImage, logoUrl }: Pro
   const isSingleLayout = () => layout === 'single';
 
   const triggerPrint = () => {
-    const printW = 210;
-    const printH = 297;
-    const canvasW = mmToPx(printW, 300);
-    const canvasH = mmToPx(printH, 300);
     generatePDF();
   };
 

@@ -20,7 +20,8 @@ export function FunnelChart({ steps, title }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {steps.map((step, i) => {
           const pct = maxVal > 0 ? (step.value / maxVal) * 100 : 0;
-          const convFromPrev = i > 0 && steps[i - 1].value > 0 ? ((step.value / steps[i - 1].value) * 100).toFixed(1) : null;
+          const prevVal = steps[i - 1]?.value;
+          const convFromPrev = i > 0 && prevVal != null && prevVal > 0 ? ((step.value / prevVal) * 100).toFixed(1) : null;
           return (
             <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{ width: '140px', textAlign: 'right', flexShrink: 0 }}>

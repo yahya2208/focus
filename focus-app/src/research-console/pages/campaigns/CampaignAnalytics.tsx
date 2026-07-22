@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../../../core/supabase/client';
 import { getDataService, type Campaign, type QRCode } from '../../../core/supabase/data-service';
 import { FunnelChart } from '../../../research-console/components/FunnelChart';
-import { HeatmapChart } from '../../../research-console/components/HeatmapChart';
 import { BarChart, LineChart } from '../../../research-console/components/charts/Charts';
 import { exportCSV, exportExcel } from '../../../research-console/components/ExportUtils';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -18,7 +17,6 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
   const { t } = useTranslation();
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [dailyData, setDailyData] = useState<{ label: string; value: number }[]>([]);
-  const [topCampaigns, setTopCampaigns] = useState<{ name: string; scans: number; conversion: number }[]>([]);
   const [deviceStats, setDeviceStats] = useState<Record<string, number>>({});
   const [browserStats, setBrowserStats] = useState<Record<string, number>>({});
 
@@ -59,11 +57,6 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
         setDailyData(sortedDays.map(([k, v]) => ({ label: k.slice(5), value: v })));
         setDeviceStats(devices);
         setBrowserStats(browsers);
-
-        const qrStats = await ds.getQRStats();
-        setTopCampaigns([
-          { name: campaign.name ?? 'This', scans: stats.scans, conversion: stats.scans > 0 ? (stats.registered / stats.scans) * 100 : 0 },
-        ]);
       } catch (err) {
         console.error('[CampaignAnalytics] load error:', err);
       }
@@ -120,7 +113,7 @@ export function CampaignAnalytics({ campaign, qrCodes }: Props) {
 
       {dailyData.length > 0 && (
         <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
-          <LineChart data={dailyData} title={t('campaign.scansPerDay')} />
+          <LineChart data={dailyData.map(d => ({ timestamp: new Date(`2025-${d.label}`).getTime() || 0, value: d.value }))} title={t('campaign.scansPerDay')} />
         </div>
       )}
 

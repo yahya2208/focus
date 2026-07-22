@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createResearchAPI, type CampaignAnalytics } from '../../../core/research/api-supabase';
 import { ResearchLayout, StatCard, DashboardHeader, FilterBar } from '../../layout/ResearchLayout';
 import type { DashboardId } from '../../layout/ResearchLayout';
 import type { ResearchFilters } from '../../../core/research/filters';
 import { createEmptyFilters } from '../../../core/research/filters';
 import { getSupabaseClient } from '../../../core/supabase/client';
-import { getDataService, type Campaign, type QRCode } from '../../../core/supabase/data-service';
+import { getDataService, type Campaign } from '../../../core/supabase/data-service';
 import { CampaignWizard } from './CampaignWizard';
 import { CampaignDetailView } from './CampaignDetailView';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -29,7 +28,6 @@ const btnSmall: React.CSSProperties = { padding: '0.4rem 0.8rem', borderRadius: 
 export function CampaignsDashboard() {
   const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<DashboardId>('campaigns');
-  const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [filters, setFilters] = useState<ResearchFilters>(createEmptyFilters());
   const [showWizard, setShowWizard] = useState(false);
@@ -38,15 +36,12 @@ export function CampaignsDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const api = createResearchAPI();
       const client = getSupabaseClient();
       const ds = getDataService(client);
-      const [analyticsData, campaignsResult, qrResult] = await Promise.all([
-        api.getCampaignAnalytics(filters),
+      const [campaignsResult, qrResult] = await Promise.all([
         ds.getCampaigns({ limit: 100 }),
         ds.getQRCodes({ limit: 500 }),
       ]);
-      setAnalytics(analyticsData);
       const rows: CampaignRow[] = campaignsResult.data.map(c => {
         const cQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
         return {
@@ -61,7 +56,7 @@ export function CampaignsDashboard() {
     } catch (err) {
       console.error('[Campaigns] load error:', err);
     }
-  }, [filters]);
+  }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
 

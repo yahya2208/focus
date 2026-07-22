@@ -88,7 +88,7 @@ function InitialRoute() {
     const path = window.location.pathname;
     const shortCodeMatch = path.match(/\/c\/([a-zA-Z0-9]{6})/);
     if (shortCodeMatch) {
-      const shortCode = shortCodeMatch[1];
+      const shortCode = shortCodeMatch[1]!;
       import('./core/supabase/data-service').then(({ getDataService }) => {
         const ds = getDataService();
         ds.getCampaignByShortCode(shortCode).then((campaign) => {

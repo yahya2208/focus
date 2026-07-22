@@ -87,7 +87,6 @@ function buildSvgString(
     }
   }
 
-  let banner = '';
   if (frameText) {
     const bannerH = cellSize * 5;
     const fontSize = Math.round(cellSize * 2.8);
