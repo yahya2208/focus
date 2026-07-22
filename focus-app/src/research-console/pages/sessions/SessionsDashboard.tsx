@@ -36,8 +36,6 @@ export function SessionsDashboard() {
 
   if (dashboard !== 'sessions') return null;
 
-  const expanded = expandedId ? sessions.find(s => s.id === expandedId) ?? null : null;
-
   return (
     <ResearchLayout activeDashboard={dashboard} onNavigate={setDashboard}>
       <DashboardHeader title="Sessions" subtitle={`${sessions.length} sessions found`} />

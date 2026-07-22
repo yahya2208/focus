@@ -6,7 +6,7 @@ import type { DashboardId } from '../../layout/ResearchLayout';
 import type { ResearchFilters } from '../../../core/research/filters';
 import { createEmptyFilters } from '../../../core/research/filters';
 import { getSupabaseClient } from '../../../core/supabase/client';
-import { getDataService, type Campaign, type QRCode } from '../../../core/supabase/data-service';
+import { getDataService, type Campaign } from '../../../core/supabase/data-service';
 import QRCodeLib from 'qrcode';
 
 const LOCATION_TYPES = ['University', 'School', 'Mall', 'Coffee Shop', 'Hospital', 'Event', 'Company', 'Outdoor', 'Other'];
@@ -197,19 +197,6 @@ function CampaignDetail({ campaign: c }: { campaign: CampaignRow }) {
     a.click();
   };
 
-  const downloadSVG = () => {
-    QRCodeLib.toString(url, { type: 'svg', width: 300, margin: 2 }, (err, svg) => {
-      if (err) return;
-      const blob = new Blob([svg], { type: 'image/svg+xml' });
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${c.name.toLowerCase().replace(/\s+/g, '-')}-qr.svg`;
-      a.click();
-      URL.revokeObjectURL(blobUrl);
-    });
-  };
-
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1.5rem', alignItems: 'start' }}>
       <div>
@@ -250,12 +237,12 @@ function CampaignDetail({ campaign: c }: { campaign: CampaignRow }) {
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
+        <p style={{ color: '#f0f0f0', fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>اختبر تركيزك</p>
         <p style={{ color: '#888', fontSize: '0.72rem', marginBottom: '0.5rem' }}>QR Code</p>
         {qrImage && <img src={qrImage} alt="QR Code" style={{ borderRadius: '8px', border: '1px solid #1e1e2e' }} />}
         <p style={{ color: '#555', fontSize: '0.6rem', marginTop: '0.4rem', maxWidth: '200px', wordBreak: 'break-all' }}>{url}</p>
-        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ marginTop: '0.75rem' }}>
           <button onClick={downloadPNG} style={btnSmall} disabled={!qrImage}>Download PNG</button>
-          <button onClick={downloadSVG} style={btnSmall}>Download SVG</button>
         </div>
       </div>
     </div>
@@ -321,26 +308,12 @@ function CampaignWizard({ onClose, onCreated }: { onClose: () => void; onCreated
     onCreated();
   };
 
-  const downloadQR = (format: 'png' | 'svg') => {
-    if (!result) return;
-    if (format === 'png' && result.qrImage) {
-      const a = document.createElement('a');
-      a.href = result.qrImage;
-      a.download = `${result.campaign.name.toLowerCase().replace(/\s+/g, '-')}-qr.png`;
-      a.click();
-    }
-    if (format === 'svg') {
-      QRCodeLib.toString(result.qrUrl, { type: 'svg', width: 300, margin: 2 }, (err, svg) => {
-        if (err) return;
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `${result.campaign.name.toLowerCase().replace(/\s+/g, '-')}-qr.svg`;
-        a.click();
-        URL.revokeObjectURL(blobUrl);
-      });
-    }
+  const downloadQR = () => {
+    if (!result?.qrImage) return;
+    const a = document.createElement('a');
+    a.href = result.qrImage;
+    a.download = `${result.campaign.name.toLowerCase().replace(/\s+/g, '-')}-qr.png`;
+    a.click();
   };
 
   const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' };
@@ -350,14 +323,14 @@ function CampaignWizard({ onClose, onCreated }: { onClose: () => void; onCreated
     return (
       <div style={overlay} onClick={onClose}>
         <div style={modal} onClick={e => e.stopPropagation()}>
-          <h3 style={{ margin: '0 0 0.75rem', fontSize: '1.1rem', color: '#22c55e' }}>Campaign Created!</h3>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: '#22c55e' }}>Campaign Created!</h3>
+          <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+            <p style={{ color: '#f0f0f0', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>اختبر تركيزك</p>
             {result.qrImage && <img src={result.qrImage} alt="QR" style={{ borderRadius: '12px', border: '1px solid #1e1e2e' }} />}
           </div>
           <p style={{ color: '#888', fontSize: '0.8rem', textAlign: 'center', wordBreak: 'break-all', marginBottom: '1rem' }}>{result.qrUrl}</p>
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
-            <button onClick={() => downloadQR('png')} style={{ ...btnPrimary, background: '#22c55e' }}>Download PNG</button>
-            <button onClick={() => downloadQR('svg')} style={btnSmall}>Download SVG</button>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <button onClick={downloadQR} style={{ ...btnPrimary, background: '#22c55e' }} disabled={!result.qrImage}>Download PNG</button>
           </div>
           <button onClick={onClose} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', background: 'transparent', color: '#888', border: '1px solid #333', cursor: 'pointer' }}>Close</button>
         </div>
