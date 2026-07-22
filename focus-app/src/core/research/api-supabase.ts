@@ -129,11 +129,28 @@ export interface SystemHealth {
   readonly gitTag: string;
 }
 
+export interface SessionRow {
+  readonly id: string;
+  readonly createdAt: string;
+  readonly userName: string;
+  readonly userType: 'Guest' | 'Registered';
+  readonly pluginId: string;
+  readonly correctedRts: readonly number[];
+  readonly avgRt: number;
+  readonly bestRt: number;
+  readonly grade: string;
+  readonly focusScore: number;
+  readonly consistencyRating: string;
+  readonly deviceInfo: string;
+  readonly campaignSource: string | null;
+}
+
 export interface ResearchAPI {
   getOverview(filters?: ResearchFilters): Promise<OverviewStats>;
   getScientific(filters?: ResearchFilters): Promise<ScientificMetrics>;
   getUserAnalytics(filters?: ResearchFilters): Promise<UserAnalytics>;
   getSessionAnalytics(filters?: ResearchFilters): Promise<SessionAnalytics>;
+  getSessionList(filters?: ResearchFilters): Promise<readonly SessionRow[]>;
   getDeviceAnalytics(filters?: ResearchFilters): Promise<DeviceAnalytics>;
   getSurveyAnalytics(filters?: ResearchFilters): Promise<SurveyAnalytics>;
   getCampaignAnalytics(filters?: ResearchFilters): Promise<CampaignAnalytics>;
@@ -363,7 +380,6 @@ export function createResearchAPI(): ResearchAPI {
       const completed = sessions.filter(s => s.status === 'completed').length;
       const failed = sessions.filter(s => s.status === 'failed').length;
 
-      // Build timeline
       const timelineMap = new Map<string, { count: number; completed: number }>();
       sessions.forEach(s => {
         const date = s.created_at.split('T')[0];
@@ -377,7 +393,6 @@ export function createResearchAPI(): ResearchAPI {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, data]) => ({ date, ...data }));
 
-      // Avg durations
       const durations = sessions
         .filter(s => s.finished_at && s.created_at)
         .map(s => new Date(s.finished_at!).getTime() - new Date(s.created_at).getTime());
@@ -403,6 +418,64 @@ export function createResearchAPI(): ResearchAPI {
         pendingSync: 0,
         failedSync: 0,
       };
+    },
+
+    async getSessionList(filters?: ResearchFilters): Promise<readonly SessionRow[]> {
+      let query = client.from('sessions')
+        .select('id, user_id, device_id, plugin_id, status, measurements, scientific_results, metadata, created_at');
+
+      if (filters?.dateFrom) query = query.gte('created_at', new Date(filters.dateFrom).toISOString());
+      if (filters?.dateTo) query = query.lte('created_at', new Date(filters.dateTo).toISOString());
+      if (filters?.game) query = query.eq('plugin_id', filters.game);
+
+      query = query.order('created_at', { ascending: false }).limit(200);
+
+      const { data: sessions } = await query;
+      const sessionList = sessions ?? [];
+
+      const userIds = [...new Set(sessionList.map(s => s.user_id).filter(Boolean))];
+      const deviceIds = [...new Set(sessionList.map(s => s.device_id).filter(Boolean))];
+
+      const [usersResult, devicesResult] = await Promise.all([
+        userIds.length > 0
+          ? client.from('users').select('id, display_name, role').in('id', userIds)
+          : Promise.resolve({ data: [] }),
+        deviceIds.length > 0
+          ? client.from('devices').select('id, browser, os').in('id', deviceIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const usersMap = new Map((usersResult.data ?? []).map(u => [u.id, u]));
+      const devicesMap = new Map((devicesResult.data ?? []).map(d => [d.id, d]));
+
+      return sessionList.map(s => {
+        const measurements = s.measurements as Record<string, unknown> | null;
+        const results = s.scientific_results as Record<string, unknown> | null;
+        const correctedRts = (measurements?.corrected_rts as number[]) ?? [];
+        const avg = correctedRts.length > 0
+          ? correctedRts.reduce((a, b) => a + b, 0) / correctedRts.length
+          : 0;
+        const best = correctedRts.length > 0 ? Math.min(...correctedRts) : 0;
+        const user = usersMap.get(s.user_id);
+        const device = devicesMap.get(s.device_id);
+        const meta = s.metadata as Record<string, unknown> | null;
+
+        return {
+          id: s.id,
+          createdAt: s.created_at,
+          userName: user?.display_name ?? (user?.role === 'guest' ? 'Guest' : 'User'),
+          userType: user?.role === 'guest' ? 'Guest' as const : 'Registered' as const,
+          pluginId: s.plugin_id ?? 'unknown',
+          correctedRts,
+          avgRt: Math.round(avg),
+          bestRt: Math.round(best),
+          grade: (results?.grade as string) ?? '-',
+          focusScore: (results?.focus_score as number) ?? 0,
+          consistencyRating: (results?.consistency_rating as string) ?? '-',
+          deviceInfo: device ? `${device.browser} / ${device.os}` : '-',
+          campaignSource: (meta?.campaign as string) ?? null,
+        };
+      });
     },
 
     async getDeviceAnalytics(_filters?: ResearchFilters): Promise<DeviceAnalytics> {

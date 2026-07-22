@@ -25,6 +25,12 @@ export interface Campaign {
   language?: string;
   version?: string;
   is_active: boolean;
+  location_type?: string;
+  description?: string;
+  country?: string;
+  state_name?: string;
+  city?: string;
+  district?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -148,6 +154,12 @@ class DataService {
         language: campaign.language,
         version: campaign.version,
         is_active: campaign.is_active,
+        location_type: campaign.location_type,
+        description: campaign.description,
+        country: campaign.country,
+        state_name: campaign.state_name,
+        city: campaign.city,
+        district: campaign.district,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })

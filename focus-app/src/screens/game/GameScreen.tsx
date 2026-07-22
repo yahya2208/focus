@@ -10,17 +10,59 @@ type Phase = 'waiting' | 'visible' | 'hit' | 'miss';
 
 const TOTAL_ROUNDS = 7;
 const MIN_DELAY_MS = 750;
-const MAX_DELAY_MS = 2200;
+const MAX_DELAY_MS = 2890;
 const LAMP_SIZE = 90;
 const MIN_POSITION_DISTANCE_PCT = 25;
 
-const POSITIONS = [
-  { x: 20, y: 25 }, { x: 50, y: 18 }, { x: 80, y: 25 },
-  { x: 25, y: 50 }, { x: 75, y: 50 },
-  { x: 20, y: 75 }, { x: 50, y: 82 }, { x: 80, y: 75 },
-  { x: 35, y: 35 }, { x: 65, y: 35 },
-  { x: 35, y: 65 }, { x: 65, y: 65 },
-] as const;
+const GRID_COLS = 5;
+const GRID_ROWS = 4;
+const TOTAL_CELLS = GRID_COLS * GRID_ROWS;
+
+function secureRandom(): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0]! / (0xFFFFFFFF + 1);
+}
+
+function gridToPercent(col: number, row: number): { x: number; y: number } {
+  const cellW = 100 / GRID_COLS;
+  const cellH = 100 / GRID_ROWS;
+  return {
+    x: cellW * col + cellW / 2,
+    y: cellH * row + cellH / 2,
+  };
+}
+
+function pickPosition(prevIdx: number): number {
+  if (prevIdx < 0) {
+    return Math.floor(secureRandom() * TOTAL_CELLS);
+  }
+  const prevCol = prevIdx % GRID_COLS;
+  const prevRow = Math.floor(prevIdx / GRID_COLS);
+  const candidates: number[] = [];
+  for (let i = 0; i < TOTAL_CELLS; i++) {
+    if (i === prevIdx) continue;
+    const col = i % GRID_COLS;
+    const row = Math.floor(i / GRID_COLS);
+    const isAdjacent = Math.abs(col - prevCol) <= 1 && Math.abs(row - prevRow) <= 1;
+    if (isAdjacent) continue;
+    const prevPos = gridToPercent(prevCol, prevRow);
+    const curPos = gridToPercent(col, row);
+    const dx = curPos.x - prevPos.x;
+    const dy = curPos.y - prevPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist >= MIN_POSITION_DISTANCE_PCT) {
+      candidates.push(i);
+    }
+  }
+  if (candidates.length === 0) {
+    for (let i = 0; i < TOTAL_CELLS; i++) {
+      if (i === prevIdx) continue;
+      candidates.push(i);
+    }
+  }
+  return candidates[Math.floor(secureRandom() * candidates.length)]!;
+}
 
 let audioCtx: AudioContext | null = null;
 function playBreakSound() {
@@ -39,16 +81,6 @@ function playBreakSound() {
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + 0.2);
   } catch { /* silent */ }
-}
-
-function pickPosition(prev: { x: number; y: number }): { x: number; y: number } {
-  const candidates = POSITIONS.filter((p) => {
-    const dx = p.x - prev.x;
-    const dy = p.y - prev.y;
-    return Math.sqrt(dx * dx + dy * dy) >= MIN_POSITION_DISTANCE_PCT;
-  });
-  if (candidates.length === 0) return POSITIONS[Math.floor(Math.random() * POSITIONS.length)]!;
-  return candidates[Math.floor(Math.random() * candidates.length)]!;
 }
 
 const KEYFRAMES_CSS = `
@@ -117,8 +149,7 @@ export function GameScreen() {
   const rawRtsRef = useRef<number[]>([]);
   const bestTimeRef = useRef<number | null>(null);
   const lastRtRef = useRef<number | null>(null);
-  const lampPosRef = useRef({ x: 50, y: 50 });
-  const prevLampPosRef = useRef({ x: 50, y: 50 });
+  const lampCellRef = useRef(-1);
   const lampElRef = useRef<HTMLButtonElement | null>(null);
 
   const stimulusTimeRef = useRef(0);
@@ -138,11 +169,10 @@ export function GameScreen() {
   const startRound = useCallback(() => {
     setPhase('waiting');
     lastRtRef.current = null;
-    const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
+    const delay = MIN_DELAY_MS + secureRandom() * (MAX_DELAY_MS - MIN_DELAY_MS);
     timerRef.current = setTimeout(() => {
-      const next = pickPosition(prevLampPosRef.current);
-      prevLampPosRef.current = next;
-      lampPosRef.current = next;
+      const nextCell = pickPosition(lampCellRef.current);
+      lampCellRef.current = nextCell;
       stimulusTimeRef.current = performance.now();
       setPhase('visible');
     }, delay);
@@ -219,7 +249,8 @@ export function GameScreen() {
   const progress = Math.round((round / TOTAL_ROUNDS) * 100);
   const bestTime = bestTimeRef.current;
   const lastRt = (phase === 'hit') ? lastRtRef.current : null;
-  const lp = lampPosRef.current;
+  const cellIdx = lampCellRef.current;
+  const lp = cellIdx >= 0 ? gridToPercent(cellIdx % GRID_COLS, Math.floor(cellIdx / GRID_COLS)) : { x: 50, y: 50 };
 
   const isNewBest = lastRt !== null && bestTime !== null && lastRt <= bestTime;
 
@@ -373,16 +404,16 @@ export function GameScreen() {
               </svg>
             </div>
             {[0, 1, 2, 3, 4, 5].map((i) => {
-              const angle = (i * 60 + Math.random() * 30) * (Math.PI / 180);
-              const dist = 30 + Math.random() * 40;
+              const angle = (i * 60 + secureRandom() * 30) * (Math.PI / 180);
+              const dist = 30 + secureRandom() * 40;
               return (
                 <div
                   key={`shard-${hudTick}-${i}`}
                   style={{
                     position: 'absolute',
                     left: `${lp.x}%`, top: `${lp.y}%`,
-                    width: 4 + Math.random() * 4,
-                    height: 4 + Math.random() * 4,
+                    width: 4 + secureRandom() * 4,
+                    height: 4 + secureRandom() * 4,
                     borderRadius: '1px',
                     background: colors.success,
                     opacity: 0.6,
@@ -391,8 +422,8 @@ export function GameScreen() {
                     transform: 'translate(-50%, -50%)',
                     ['--sx' as string]: `${Math.cos(angle) * dist}px`,
                     ['--sy' as string]: `${Math.sin(angle) * dist}px`,
-                    ['--sr' as string]: `${Math.random() * 360}deg`,
-                    animation: `shardFly ${0.3 + Math.random() * 0.2}s ease-out forwards`,
+                    ['--sr' as string]: `${secureRandom() * 360}deg`,
+                    animation: `shardFly ${0.3 + secureRandom() * 0.2}s ease-out forwards`,
                   }}
                 />
               );

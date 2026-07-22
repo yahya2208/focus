@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import type { ResearchFilters, FilterKey } from '../../core/research/filters';
+
+const MOBILE_BREAKPOINT = 768;
 
 export type DashboardId =
   | 'overview' | 'scientific' | 'users' | 'sessions'
@@ -20,6 +22,20 @@ const DASHBOARDS: { id: DashboardId; label: string; icon: string }[] = [
   { id: 'system', label: 'System', icon: '⚙' },
 ];
 
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
 interface ResearchLayoutProps {
   activeDashboard: DashboardId;
   onNavigate: (dashboard: DashboardId) => void;
@@ -27,59 +43,110 @@ interface ResearchLayoutProps {
 }
 
 export function ResearchLayout({ activeDashboard, onNavigate, children }: ResearchLayoutProps) {
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const navigate = useCallback((id: DashboardId) => {
+    onNavigate(id);
+    setDrawerOpen(false);
+  }, [onNavigate]);
+
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
+
+  const SidebarContent = () => (
+    <>
+      <div style={{ padding: '0 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#6366f1' }}>FOCUS Research</span>
+        {isMobile && (
+          <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.2rem', padding: '0.25rem' }} aria-label="Close menu">
+            ✕
+          </button>
+        )}
+        {!isMobile && (
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.2rem', padding: '0.25rem' }} aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
+            {sidebarOpen ? '◀' : '▶'}
+          </button>
+        )}
+      </div>
+      <nav aria-label="Research console navigation">
+        {DASHBOARDS.map((d) => (
+          <button
+            key={d.id}
+            onClick={() => navigate(d.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+              width: '100%', padding: (isMobile || sidebarOpen) ? '0.6rem 1rem' : '0.6rem 0',
+              justifyContent: (isMobile || sidebarOpen) ? 'flex-start' : 'center',
+              background: activeDashboard === d.id ? '#1e1e2e' : 'transparent',
+              border: 'none', color: activeDashboard === d.id ? '#6366f1' : '#888',
+              cursor: 'pointer', fontSize: '0.9rem', borderRadius: '0',
+              transition: 'background 0.1s',
+            }}
+            aria-current={activeDashboard === d.id ? 'page' : undefined}
+            title={d.label}
+          >
+            <span>{d.icon}</span>
+            {(isMobile || sidebarOpen) && <span>{d.label}</span>}
+          </button>
+        ))}
+      </nav>
+    </>
+  );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0f', color: '#f0f0f0' }}>
-      <aside
-        style={{
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0f', color: '#f0f0f0', position: 'relative', overflow: 'hidden' }}>
+      {isMobile && drawerOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90 }}
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {!isMobile && (
+        <aside style={{
           width: sidebarOpen ? '240px' : '60px',
           background: '#12121a',
           borderRight: '1px solid #1e1e2e',
           padding: '1rem 0',
           transition: 'width 0.2s',
           flexShrink: 0,
-        }}
-      >
-        <div style={{ padding: '0 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {sidebarOpen && <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#6366f1' }}>FOCUS Research</span>}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-              fontSize: '1.2rem', padding: '0.25rem',
-            }}
-            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {sidebarOpen ? '◀' : '▶'}
-          </button>
-        </div>
-        <nav aria-label="Research console navigation">
-          {DASHBOARDS.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => onNavigate(d.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                width: '100%', padding: sidebarOpen ? '0.6rem 1rem' : '0.6rem 0',
-                justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                background: activeDashboard === d.id ? '#1e1e2e' : 'transparent',
-                border: 'none', color: activeDashboard === d.id ? '#6366f1' : '#888',
-                cursor: 'pointer', fontSize: '0.9rem', borderRadius: '0',
-                transition: 'background 0.1s',
-              }}
-              aria-current={activeDashboard === d.id ? 'page' : undefined}
-              title={d.label}
-            >
-              <span>{d.icon}</span>
-              {sidebarOpen && <span>{d.label}</span>}
+          overflow: 'hidden',
+        }}>
+          <SidebarContent />
+        </aside>
+      )}
+
+      {isMobile && (
+        <aside style={{
+          position: 'fixed', top: 0, left: drawerOpen ? 0 : '-260px',
+          width: '260px', height: '100vh',
+          background: '#12121a',
+          borderRight: '1px solid #1e1e2e',
+          padding: '1rem 0',
+          transition: 'left 0.25s ease',
+          zIndex: 100,
+          overflowY: 'auto',
+        }}>
+          <SidebarContent />
+        </aside>
+      )}
+
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {isMobile && (
+          <div style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #1e1e2e', background: '#12121a' }}>
+            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', color: '#f0f0f0', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem' }} aria-label="Open menu">
+              ☰
             </button>
-          ))}
-        </nav>
-      </aside>
-      <main style={{ flex: 1, padding: '1.5rem', overflow: 'auto' }}>
-        {children}
-      </main>
+            <span style={{ fontWeight: 'bold', color: '#6366f1' }}>FOCUS Research</span>
+          </div>
+        )}
+        <main style={{ flex: 1, padding: isMobile ? '1rem' : '1.5rem', overflow: 'auto', width: '100%', minWidth: 0 }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
