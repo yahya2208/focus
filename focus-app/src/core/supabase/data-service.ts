@@ -1,6 +1,13 @@
 import { getSupabaseClient } from './client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function generateShortCode(): string {
+  const buf = new Uint8Array(6);
+  crypto.getRandomValues(buf);
+  return Array.from(buf, b => BASE62[b % 62]).join('');
+}
+
 // Types for analytics events
 export interface AnalyticsEvent {
   id?: string;
@@ -31,8 +38,42 @@ export interface Campaign {
   state_name?: string;
   city?: string;
   district?: string;
+  venue?: string;
+  goal?: string;
+  budget?: number;
+  budget_currency?: string;
+  campaign_type?: string;
+  material?: string;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  logo_url?: string;
+  notes?: string;
+  short_code?: string;
+  qr_config?: QRConfig;
+  timeline?: CampaignTimelineEntry[];
+  created_by?: string;
+  last_edited_by?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface QRConfig {
+  template?: string;
+  foreground?: string;
+  background?: string;
+  rounded?: boolean;
+  eyeRounded?: boolean;
+  frame?: string;
+  frameText?: string;
+  logoOption?: 'default' | 'upload' | 'none';
+  logoUrl?: string;
+}
+
+export interface CampaignTimelineEntry {
+  action: string;
+  timestamp: string;
+  by?: string;
 }
 
 // Types for QR codes
@@ -47,6 +88,7 @@ export interface QRCode {
   game_complete_count: number;
   registration_count: number;
   is_active: boolean;
+  version?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -142,6 +184,7 @@ class DataService {
 
   // Campaigns
   async createCampaign(campaign: Omit<Campaign, 'id' | 'created_at' | 'updated_at'>): Promise<Campaign | null> {
+    const shortCode = generateShortCode();
     const { data, error } = await this.client
       .from('campaigns')
       .insert({
@@ -160,6 +203,21 @@ class DataService {
         state_name: campaign.state_name,
         city: campaign.city,
         district: campaign.district,
+        venue: campaign.venue,
+        goal: campaign.goal,
+        budget: campaign.budget,
+        budget_currency: campaign.budget_currency,
+        campaign_type: campaign.campaign_type,
+        material: campaign.material,
+        start_date: campaign.start_date,
+        end_date: campaign.end_date,
+        status: campaign.status ?? 'active',
+        logo_url: campaign.logo_url,
+        notes: campaign.notes,
+        short_code: shortCode,
+        qr_config: campaign.qr_config,
+        timeline: [{ action: 'created', timestamp: new Date().toISOString(), by: campaign.created_by }],
+        created_by: campaign.created_by,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -217,12 +275,61 @@ class DataService {
   async deleteCampaign(id: string): Promise<void> {
     const { error } = await this.client
       .from('campaigns')
-      .delete()
+      .update({ status: 'archived', is_active: false, updated_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
-      console.error('Failed to delete campaign:', error);
+      console.error('Failed to archive campaign:', error);
     }
+  }
+
+  async restoreCampaign(id: string): Promise<void> {
+    const { error } = await this.client
+      .from('campaigns')
+      .update({ status: 'active', is_active: true, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to restore campaign:', error);
+    }
+  }
+
+  async getCampaignByShortCode(code: string): Promise<Campaign | null> {
+    const { data, error } = await this.client
+      .from('campaigns')
+      .select('*')
+      .eq('short_code', code)
+      .single();
+
+    if (error || !data) return null;
+    return data;
+  }
+
+  async addTimelineEntry(campaignId: string, action: string, by?: string): Promise<void> {
+    const { data } = await this.client
+      .from('campaigns')
+      .select('timeline')
+      .eq('id', campaignId)
+      .single();
+
+    const timeline = (data?.timeline ?? []) as CampaignTimelineEntry[];
+    timeline.push({ action, timestamp: new Date().toISOString(), by });
+
+    await this.client
+      .from('campaigns')
+      .update({ timeline, updated_at: new Date().toISOString() })
+      .eq('id', campaignId);
+  }
+
+  async getCampaignEvents(campaignId: string, limit = 500): Promise<AnalyticsEvent[]> {
+    const { data } = await this.client
+      .from('analytics_events')
+      .select('*')
+      .contains('event_data', { campaign_id: campaignId })
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    return (data ?? []) as AnalyticsEvent[];
   }
 
   // QR Codes

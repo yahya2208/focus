@@ -1,0 +1,217 @@
+import { useState, useEffect } from 'react';
+import { getSupabaseClient } from '../../../core/supabase/client';
+import { getDataService, type Campaign, type QRCode, type QRConfig, type CampaignTimelineEntry } from '../../../core/supabase/data-service';
+import QRCodeLib from 'qrcode';
+import { QRDesigner } from './QRDesigner';
+import { PrintCenter } from './PrintCenter';
+import { CampaignAnalytics } from './CampaignAnalytics';
+
+type DetailTab = 'overview' | 'designer' | 'analytics' | 'print';
+
+interface Props {
+  campaign: Campaign;
+  onBack: () => void;
+  onUpdate: () => void;
+}
+
+const TABS: { id: DetailTab; label: string; icon: string }[] = [
+  { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'designer', label: 'QR Designer', icon: '🎨' },
+  { id: 'analytics', label: 'Analytics', icon: '📈' },
+  { id: 'print', label: 'Print Center', icon: '🖨' },
+];
+
+const STATUS_COLORS: Record<string, string> = { active: '#22c55e', draft: '#888', paused: '#f59e0b', finished: '#3b82f6', archived: '#ef4444' };
+const btnSmall: React.CSSProperties = { padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#1e1e2e', color: '#ccc', border: '1px solid #333', cursor: 'pointer', fontSize: '0.78rem' };
+
+export function CampaignDetailView({ campaign: c, onBack, onUpdate }: Props) {
+  const [tab, setTab] = useState<DetailTab>('overview');
+  const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState(c.notes ?? '');
+
+  const basePath = import.meta.env.BASE_URL || '/';
+  const shortCode = c.short_code || c.id || '';
+  const campaignUrl = `${window.location.origin}${basePath}c/${shortCode}`;
+
+  useEffect(() => {
+    const load = async () => {
+      const ds = getDataService(getSupabaseClient());
+      const result = await ds.getQRCodes({ campaign_id: c.id });
+      setQRCodes(result.data);
+    };
+    load();
+  }, [c.id]);
+
+  useEffect(() => {
+    QRCodeLib.toDataURL(campaignUrl, { width: 300, margin: 2, color: { dark: '#1e1e2e', light: '#ffffff' } })
+      .then(setQrImage)
+      .catch(() => setQrImage(null));
+  }, [campaignUrl]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    const ds = getDataService(getSupabaseClient());
+    await ds.updateCampaign(c.id!, { status: newStatus, is_active: newStatus === 'active' });
+    await ds.addTimelineEntry(c.id!, `status_changed_to_${newStatus}`);
+    setEditingStatus(false);
+    onUpdate();
+  };
+
+  const handleSaveNotes = async () => {
+    const ds = getDataService(getSupabaseClient());
+    await ds.updateCampaign(c.id!, { notes: notesValue });
+    setEditingNotes(false);
+    onUpdate();
+  };
+
+  const handleSaveQRConfig = async (config: QRConfig) => {
+    const ds = getDataService(getSupabaseClient());
+    await ds.updateCampaign(c.id!, { qr_config: config });
+    await ds.addTimelineEntry(c.id!, 'qr_design_updated');
+    onUpdate();
+  };
+
+  const stats = {
+    scans: qrCodes.reduce((s, q) => s + q.scan_count, 0),
+    started: qrCodes.reduce((s, q) => s + q.game_start_count, 0),
+    completed: qrCodes.reduce((s, q) => s + q.game_complete_count, 0),
+    registered: qrCodes.reduce((s, q) => s + q.registration_count, 0),
+  };
+
+  const timeline = (c.timeline ?? []) as CampaignTimelineEntry[];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.2rem' }}>←</button>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ margin: 0, color: '#f0f0f0', fontSize: '1.1rem' }}>{c.name}</h3>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: '#666' }}>
+            focus.app/c/{shortCode}
+            <span style={{ marginLeft: '0.5rem', padding: '1px 6px', borderRadius: '4px', background: STATUS_COLORS[c.status ?? 'active'] ?? '#333', color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>{c.status ?? 'active'}</span>
+          </p>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '2px', marginBottom: '1rem', borderBottom: '2px solid #1e1e2e', paddingBottom: '2px' }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            padding: '0.5rem 1rem', borderRadius: '8px 8px 0 0', background: tab === t.id ? '#1e1e2e' : 'transparent',
+            color: tab === t.id ? '#f0f0f0' : '#666', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: tab === t.id ? 600 : 400,
+          }}>{t.icon} {t.label}</button>
+        ))}
+      </div>
+
+      {tab === 'overview' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem', color: '#f0f0f0', fontSize: '0.9rem' }}>Campaign Information</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                {[
+                  { label: 'Goal', value: c.goal?.replace(/_/g, ' ') ?? '-' },
+                  { label: 'Type', value: c.campaign_type ?? '-' },
+                  { label: 'Material', value: c.material ?? '-' },
+                  { label: 'Country', value: c.country ?? '-' },
+                  { label: 'State', value: c.state_name ?? '-' },
+                  { label: 'City', value: c.city ?? '-' },
+                  { label: 'District', value: c.district ?? '-' },
+                  { label: 'Venue', value: c.venue ?? '-' },
+                  { label: 'Budget', value: c.budget ? `${c.budget} ${c.budget_currency ?? ''}` : '-' },
+                  { label: 'Created', value: c.created_at ? new Date(c.created_at).toLocaleDateString() : '-' },
+                  { label: 'Start Date', value: c.start_date ? new Date(c.start_date).toLocaleDateString() : '-' },
+                  { label: 'End Date', value: c.end_date ? new Date(c.end_date).toLocaleDateString() : '-' },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p style={{ color: '#666', fontSize: '0.65rem', margin: '0 0 0.1rem', textTransform: 'uppercase' as const }}>{label}</p>
+                    <p style={{ color: '#f0f0f0', fontSize: '0.8rem', margin: 0, wordBreak: 'break-word' }}>{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem', color: '#f0f0f0', fontSize: '0.9rem' }}>Description & Notes</h4>
+              <p style={{ color: '#ccc', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{c.description || 'No description'}</p>
+              {editingNotes ? (
+                <div>
+                  <textarea style={{ width: '100%', minHeight: '60px', background: '#1e1e2e', color: '#f0f0f0', border: '1px solid #333', borderRadius: '6px', padding: '0.5rem', fontSize: '0.82rem', resize: 'vertical', boxSizing: 'border-box' }} value={notesValue} onChange={e => setNotesValue(e.target.value)} />
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button onClick={handleSaveNotes} style={{ ...btnSmall, background: '#6366f1', color: '#fff', border: 'none' }}>Save</button>
+                    <button onClick={() => setEditingNotes(false)} style={btnSmall}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p onClick={() => setEditingNotes(true)} style={{ color: '#888', fontSize: '0.78rem', margin: 0, cursor: 'pointer', fontStyle: c.notes ? 'normal' : 'italic' }}>
+                  {c.notes || 'Click to add notes...'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+              <p style={{ color: '#f0f0f0', fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>اختبر تركيزك</p>
+              {qrImage && <img src={qrImage} alt="QR" style={{ borderRadius: '8px', border: '1px solid #1e1e2e', maxWidth: '200px' }} />}
+              <p style={{ color: '#22c55e', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 600 }}>focus.app/c/{shortCode}</p>
+            </div>
+
+            <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', color: '#f0f0f0', fontSize: '0.85rem' }}>Performance</h4>
+              {[
+                { label: 'Scans', value: stats.scans, color: '#6366f1' },
+                { label: 'Started', value: stats.started, color: '#3b82f6' },
+                { label: 'Completed', value: stats.completed, color: '#22c55e' },
+                { label: 'Registered', value: stats.registered, color: '#f59e0b' },
+              ].map(s => (
+                <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', fontSize: '0.8rem' }}>
+                  <span style={{ color: '#888' }}>{s.label}</span>
+                  <span style={{ color: s.color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', color: '#f0f0f0', fontSize: '0.85rem' }}>Status</h4>
+              {editingStatus ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                  {['active', 'draft', 'paused', 'finished', 'archived'].map(s => (
+                    <button key={s} onClick={() => handleStatusChange(s)} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', background: STATUS_COLORS[s], color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}>{s}</button>
+                  ))}
+                </div>
+              ) : (
+                <p onClick={() => setEditingStatus(true)} style={{ color: STATUS_COLORS[c.status ?? 'active'], fontSize: '0.85rem', margin: 0, cursor: 'pointer', fontWeight: 600 }}>{c.status ?? 'active'} (click to change)</p>
+              )}
+            </div>
+
+            {timeline.length > 0 && (
+              <div style={{ background: '#12121a', border: '1px solid #1e1e2e', borderRadius: '12px', padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem', color: '#f0f0f0', fontSize: '0.85rem' }}>Timeline</h4>
+                {timeline.slice(-5).reverse().map((entry, i) => (
+                  <div key={i} style={{ padding: '0.25rem 0', borderBottom: '1px solid #1e1e2e', fontSize: '0.75rem' }}>
+                    <span style={{ color: '#ccc' }}>{entry.action.replace(/_/g, ' ')}</span>
+                    <span style={{ color: '#555', marginLeft: '0.5rem' }}>{new Date(entry.timestamp).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'designer' && (
+        <QRDesigner campaignId={c.id!} campaignUrl={campaignUrl} qrConfig={c.qr_config} onSave={handleSaveQRConfig} />
+      )}
+
+      {tab === 'analytics' && (
+        <CampaignAnalytics campaign={c} qrCodes={qrCodes} />
+      )}
+
+      {tab === 'print' && (
+        <PrintCenter campaignName={c.name} campaignUrl={campaignUrl} qrImage={qrImage} logoUrl={c.logo_url} />
+      )}
+    </div>
+  );
+}

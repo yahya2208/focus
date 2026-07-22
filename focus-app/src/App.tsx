@@ -84,6 +84,23 @@ function InitialRoute() {
 
   useEffect(() => {
     if (currentScreen !== 'home') return;
+
+    const path = window.location.pathname;
+    const shortCodeMatch = path.match(/\/c\/([a-zA-Z0-9]{6})/);
+    if (shortCodeMatch) {
+      const shortCode = shortCodeMatch[1];
+      import('./core/supabase/data-service').then(({ getDataService }) => {
+        const ds = getDataService();
+        ds.getCampaignByShortCode(shortCode).then((campaign) => {
+          if (campaign?.id) {
+            getGlobalTelemetry().track('qr_scanned', { source: 'short_url', campaign: campaign.short_code });
+            dispatch({ type: 'START_QR_FLOW', source: campaign.short_code! });
+          }
+        });
+      });
+      return;
+    }
+
     const deepLink = parseDeepLinkFromCurrentUrl();
     const telemetry = getGlobalTelemetry();
     const hasQrParams = hasCampaign(deepLink.campaign) || deepLink.referralCode;
