@@ -181,7 +181,8 @@ export function GameScreen() {
   useEffect(() => {
     if (round >= TOTAL_ROUNDS) {
       const rts = rawRtsRef.current;
-      getGlobalTelemetry().track('game_completed', {
+      const telemetry = getGlobalTelemetry();
+      telemetry.track('game_completed', {
         totalRounds: TOTAL_ROUNDS,
         validRounds: rts.filter((rt) => {
           const corrected = rt - calibration.displayLagMs - calibration.inputLagMs;
@@ -190,6 +191,7 @@ export function GameScreen() {
         isQrFlow,
         campaign_id: campaignId,
       });
+      telemetry.flush();
       dispatch({
         type: 'SET_RESULTS',
         results: {

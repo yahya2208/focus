@@ -86,20 +86,47 @@ function InitialRoute() {
     if (currentScreen !== 'home') return;
 
     const path = window.location.pathname;
-    const shortCodeMatch = path.match(/\/c\/([a-zA-Z0-9]{6})/);
+    const search = window.location.search;
+    const fullPath = path + search;
+
+    console.log('[QR-ROUTE] InitialRoute fired', {
+      pathname: path,
+      search,
+      fullPath,
+      currentScreen,
+    });
+
+    const shortCodeMatch = fullPath.match(/\/c\/([a-zA-Z0-9]{6})/);
     if (shortCodeMatch) {
       const shortCode = shortCodeMatch[1]!;
+      console.log('[QR-ROUTE] Short code found:', shortCode);
+
       import('./core/supabase/data-service').then(({ getDataService }) => {
         const ds = getDataService();
         ds.getCampaignByShortCode(shortCode).then((campaign) => {
+          console.log('[QR-ROUTE] Campaign lookup result:', campaign ? { id: campaign.id, name: campaign.name, short_code: campaign.short_code } : null);
           if (campaign?.id) {
-            getGlobalTelemetry().track('qr_scanned', { campaign_id: campaign.id });
+            console.log('[QR-ROUTE] Dispatching START_QR_FLOW with campaignId:', campaign.id);
+            const telemetry = getGlobalTelemetry();
+            telemetry.track('qr_scanned', { campaign_id: campaign.id });
+            telemetry.flush();
             dispatch({ type: 'START_QR_FLOW', campaignId: campaign.id });
             import('./core/qr/campaign').then(({ createCampaignStore }) => {
-              createCampaignStore().recordScan(campaign.id!);
+              console.log('[QR-ROUTE] Calling recordScan for campaign:', campaign.id);
+              createCampaignStore().recordScan(campaign.id!).then(() => {
+                console.log('[QR-ROUTE] recordScan completed');
+              }).catch((err: unknown) => {
+                console.error('[QR-ROUTE] recordScan FAILED:', err);
+              });
             });
+          } else {
+            console.error('[QR-ROUTE] Campaign not found for short_code:', shortCode);
           }
+        }).catch((err: unknown) => {
+          console.error('[QR-ROUTE] getCampaignByShortCode FAILED:', err);
         });
+      }).catch((err: unknown) => {
+        console.error('[QR-ROUTE] Failed to import data-service:', err);
       });
       return;
     }
@@ -107,6 +134,8 @@ function InitialRoute() {
     const deepLink = parseDeepLinkFromCurrentUrl();
     const telemetry = getGlobalTelemetry();
     const hasQrParams = hasCampaign(deepLink.campaign) || deepLink.referralCode;
+
+    console.log('[QR-ROUTE] No short code found. Deep link:', { isValid: deepLink.isValid, hasQrParams, campaign: deepLink.campaign.campaign });
 
     if (deepLink.isValid && hasQrParams) {
       telemetry.track('qr_scanned', {
@@ -119,6 +148,7 @@ function InitialRoute() {
       return;
     }
 
+    console.log('[QR-ROUTE] No QR params detected. Showing calibration or home.');
     runSilentCalibration().then((profile) => {
       if (profile) {
         dispatch({ type: 'SET_CALIBRATION', profile });

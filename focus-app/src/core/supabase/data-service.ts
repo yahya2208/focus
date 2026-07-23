@@ -122,6 +122,8 @@ class DataService {
   // Analytics Events
   async trackEvent(event: Omit<AnalyticsEvent, 'id' | 'created_at'>): Promise<void> {
     const props = event.event_data as Record<string, unknown>;
+    const campaignId = (props?.campaign_id as string) ?? event.campaign_id ?? undefined;
+    console.log('[TELEMETRY-DB] trackEvent:', { event_type: event.event_type, campaign_id: campaignId ?? null });
     const { error } = await this.client
       .from('analytics_events')
       .insert({
@@ -129,11 +131,17 @@ class DataService {
         session_id: event.session_id,
         event_type: event.event_type,
         event_data: event.event_data,
-        campaign_id: (props?.campaign_id as string) ?? event.campaign_id ?? undefined,
+        campaign_id: campaignId,
         device_id: event.device_id,
         user_agent: event.user_agent || navigator.userAgent,
         created_at: new Date().toISOString(),
       });
+
+    if (error) {
+      console.error('[TELEMETRY-DB] FAILED:', error.message, error.code, error.details);
+    } else {
+      console.log('[TELEMETRY-DB] Event inserted successfully');
+    }
 
     if (error) {
       console.error('Failed to track analytics event:', error);

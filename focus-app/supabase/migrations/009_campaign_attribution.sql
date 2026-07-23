@@ -42,6 +42,10 @@ BEGIN
 END;
 $$;
 
+GRANT EXECUTE ON FUNCTION increment_qr_counter(uuid, text) TO anon;
+GRANT EXECUTE ON FUNCTION increment_qr_counter(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION increment_qr_counter(uuid, text) TO service_role;
+
 -- ──────────────────────────────────────────────
 -- 4. Backfill: populate campaign_id on sessions from metadata
 -- ──────────────────────────────────────────────
