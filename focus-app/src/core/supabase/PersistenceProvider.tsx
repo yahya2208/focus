@@ -6,7 +6,7 @@ import type { CalibrationProfile } from '../calibration';
 
 export function PersistenceProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { sessions, calibrationProfile, qrSource } = useAppState();
+  const { sessions, calibrationProfile, campaignId } = useAppState();
   const lastSavedCountRef = useRef(0);
   const dispatchRef = useRef(dispatch);
   dispatchRef.current = dispatch;
@@ -178,6 +178,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         user_id: user.id,
         device_id: deviceId,
         calibration_id: calibrationId,
+        campaign_id: campaignId ?? undefined,
         plugin_id: session.gameMode,
         status: 'completed',
         measurements: {
@@ -197,7 +198,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
           focus_score: focusScore,
           grade,
         },
-        metadata: { version: '2.0', source: 'web-app', campaign_source: qrSource ?? undefined },
+        metadata: { version: '2.0', source: 'web-app' },
         created_at: new Date(session.timestamp).toISOString(),
         updated_at: new Date().toISOString(),
         finished_at: new Date().toISOString(),

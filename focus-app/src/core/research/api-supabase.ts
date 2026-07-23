@@ -422,7 +422,7 @@ export function createResearchAPI(): ResearchAPI {
 
     async getSessionList(filters?: ResearchFilters): Promise<readonly SessionRow[]> {
       let query = client.from('sessions')
-        .select('id, user_id, device_id, plugin_id, status, measurements, scientific_results, metadata, created_at');
+        .select('id, user_id, device_id, plugin_id, status, measurements, scientific_results, metadata, campaign_id, created_at');
 
       if (filters?.dateFrom) query = query.gte('created_at', new Date(filters.dateFrom).toISOString());
       if (filters?.dateTo) query = query.lte('created_at', new Date(filters.dateTo).toISOString());
@@ -473,7 +473,7 @@ export function createResearchAPI(): ResearchAPI {
           focusScore: (results?.focus_score as number) ?? 0,
           consistencyRating: (results?.consistency_rating as string) ?? '-',
           deviceInfo: device ? `${device.browser} / ${device.os}` : '-',
-          campaignSource: (meta?.campaign as string) ?? null,
+        campaignSource: (s.campaign_id as string) ?? (meta?.campaign_source as string) ?? null,
         };
       });
     },
@@ -539,17 +539,28 @@ export function createResearchAPI(): ResearchAPI {
 
     async getCampaignAnalytics(_filters?: ResearchFilters): Promise<CampaignAnalytics> {
       const dataServiceLocal = getDataService(client);
-      const [campaignsResult, qrResult] = await Promise.all([
+      const [campaignsResult, qrResult, sessionsResult] = await Promise.all([
         dataServiceLocal.getCampaigns({ limit: 100 }),
         dataServiceLocal.getQRCodes({ limit: 100 }),
+        client.from('sessions').select('campaign_id, status').not('campaign_id', 'is', null),
       ]);
 
-      const campaigns = campaignsResult.data.map(c => ({
-        id: c.id ?? '',
-        name: c.name,
-        is_active: c.is_active,
-        created_at: c.created_at ?? new Date().toISOString(),
-      }));
+      const sessionList = sessionsResult.data ?? [];
+
+      const campaigns = campaignsResult.data.map(c => {
+        const cSessions = sessionList.filter(s => s.campaign_id === c.id);
+        const cQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
+        const totalScans = cQrs.reduce((sum, qr) => sum + qr.scan_count, 0);
+        const totalRegs = cSessions.filter(s => s.status === 'completed').length;
+        return {
+          id: c.id ?? '',
+          name: c.name,
+          is_active: c.is_active,
+          created_at: c.created_at ?? new Date().toISOString(),
+          scans: totalScans,
+          registrations: totalRegs,
+        };
+      });
 
       const referralPerformance = qrResult.data.map(qr => ({
         code: qr.code,
@@ -558,24 +569,24 @@ export function createResearchAPI(): ResearchAPI {
         rate: qr.scan_count > 0 ? (qr.registration_count / qr.scan_count) * 100 : 0,
       }));
 
+      const totalScans = campaigns.reduce((sum, c) => sum + c.scans, 0);
+      const totalRegs = campaigns.reduce((sum, c) => sum + c.registrations, 0);
+
       return {
-        campaigns,
+        campaigns: campaigns.map(c => ({ id: c.id, name: c.name, is_active: c.is_active, created_at: c.created_at })),
         referralPerformance,
         landingConversion: campaigns.length > 0 ? Math.round((qrResult.data.length / Math.max(campaigns.length, 1)) * 100) / 100 : 0,
-        registrationConversion: qrResult.data.length > 0 ? Math.round((qrResult.data.reduce((sum, qr) => sum + qr.registration_count, 0) / qrResult.data.reduce((sum, qr) => sum + qr.scan_count, 0)) * 100) / 100 : 0,
-        sessionCompletionByCampaign: campaigns.map(c => {
-          const campaignQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
-          const totalScans = campaignQrs.reduce((sum, qr) => sum + qr.scan_count, 0);
-          return { campaign: c.name, rate: totalScans > 0 ? Math.round((campaignQrs.reduce((sum, qr) => sum + qr.registration_count, 0) / totalScans) * 100) : 0 };
-        }),
+        registrationConversion: totalScans > 0 ? Math.round((totalRegs / totalScans) * 100) / 100 : 0,
+        sessionCompletionByCampaign: campaigns.map(c => ({
+          campaign: c.name,
+          rate: c.scans > 0 ? Math.round((c.registrations / c.scans) * 100) : 0,
+        })),
         avgRtByCampaign: [],
         avgFocusByCampaign: [],
-        campaignRanking: campaigns.map(c => {
-          const campaignQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
-          const totalScans = campaignQrs.reduce((sum, qr) => sum + qr.scan_count, 0);
-          const totalRegs = campaignQrs.reduce((sum, qr) => sum + qr.registration_count, 0);
-          return { campaign: c.name, score: totalScans + totalRegs * 10 };
-        }).sort((a, b) => b.score - a.score),
+        campaignRanking: campaigns.map(c => ({
+          campaign: c.name,
+          score: c.scans + c.registrations * 10,
+        })).sort((a, b) => b.score - a.score),
       };
     },
 

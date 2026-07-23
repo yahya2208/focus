@@ -195,18 +195,12 @@ export function createCampaignStore(): CampaignStore {
 
     async recordScan(id: string): Promise<void> {
       const client = getSupabaseClient();
-      await client
-        .from('qr_codes')
-        .update({ scan_count: client.rpc('increment_scan_count') })
-        .eq('campaign_id', id);
+      await client.rpc('increment_qr_counter', { p_campaign_id: id, p_column: 'scan_count' });
     },
 
     async recordConversion(id: string): Promise<void> {
       const client = getSupabaseClient();
-      await client
-        .from('qr_codes')
-        .update({ registration_count: client.rpc('increment_registration_count') })
-        .eq('campaign_id', id);
+      await client.rpc('increment_qr_counter', { p_campaign_id: id, p_column: 'registration_count' });
     },
 
     async deactivate(id: string): Promise<void> {

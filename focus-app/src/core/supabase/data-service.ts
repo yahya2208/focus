@@ -15,6 +15,7 @@ export interface AnalyticsEvent {
   session_id?: string;
   event_type: string;
   event_data: Record<string, unknown>;
+  campaign_id?: string;
   device_id?: string;
   user_agent?: string;
   created_at?: string;
@@ -99,6 +100,7 @@ export interface SessionData {
   user_id: string;
   device_id: string;
   calibration_id: string;
+  campaign_id?: string;
   plugin_id: string;
   status: string;
   measurements?: Record<string, unknown>;
@@ -119,6 +121,7 @@ class DataService {
 
   // Analytics Events
   async trackEvent(event: Omit<AnalyticsEvent, 'id' | 'created_at'>): Promise<void> {
+    const props = event.event_data as Record<string, unknown>;
     const { error } = await this.client
       .from('analytics_events')
       .insert({
@@ -126,6 +129,7 @@ class DataService {
         session_id: event.session_id,
         event_type: event.event_type,
         event_data: event.event_data,
+        campaign_id: (props?.campaign_id as string) ?? event.campaign_id ?? undefined,
         device_id: event.device_id,
         user_agent: event.user_agent || navigator.userAgent,
         created_at: new Date().toISOString(),
@@ -325,7 +329,7 @@ class DataService {
     const { data } = await this.client
       .from('analytics_events')
       .select('*')
-      .contains('event_data', { campaign_id: campaignId })
+      .eq('campaign_id', campaignId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -432,6 +436,7 @@ class DataService {
         user_id: session.user_id,
         device_id: session.device_id,
         calibration_id: session.calibration_id,
+        campaign_id: session.campaign_id,
         plugin_id: session.plugin_id,
         status: session.status,
         measurements: session.measurements,

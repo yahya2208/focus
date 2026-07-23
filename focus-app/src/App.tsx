@@ -93,8 +93,11 @@ function InitialRoute() {
         const ds = getDataService();
         ds.getCampaignByShortCode(shortCode).then((campaign) => {
           if (campaign?.id) {
-            getGlobalTelemetry().track('qr_scanned', { source: 'short_url', campaign: campaign.short_code });
-            dispatch({ type: 'START_QR_FLOW', source: campaign.short_code! });
+            getGlobalTelemetry().track('qr_scanned', { campaign_id: campaign.id });
+            dispatch({ type: 'START_QR_FLOW', campaignId: campaign.id });
+            import('./core/qr/campaign').then(({ createCampaignStore }) => {
+              createCampaignStore().recordScan(campaign.id!);
+            });
           }
         });
       });
@@ -112,8 +115,7 @@ function InitialRoute() {
         referrer: deepLink.referralCode,
       });
 
-      const source = deepLink.campaign.source ?? deepLink.campaign.campaign ?? deepLink.referralCode ?? 'qr_direct';
-      dispatch({ type: 'START_QR_FLOW', source });
+      dispatch({ type: 'START_QR_FLOW' });
       return;
     }
 

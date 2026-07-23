@@ -51,7 +51,7 @@ export interface AppState {
   } | null;
   sessions: SessionRecord[];
   isQrFlow: boolean;
-  qrSource: string | null;
+  campaignId: string | null;
 }
 
 type NavigationAction =
@@ -61,7 +61,7 @@ type NavigationAction =
   | { type: 'SET_RESULTS'; results: AppState['results'] }
   | { type: 'SAVE_SESSION' }
   | { type: 'RESET' }
-  | { type: 'START_QR_FLOW'; source: string };
+  | { type: 'START_QR_FLOW'; campaignId?: string | null };
 
 const initialState: AppState = {
   screen: 'home',
@@ -72,7 +72,7 @@ const initialState: AppState = {
   results: null,
   sessions: [],
   isQrFlow: false,
-  qrSource: null,
+  campaignId: null,
 };
 
 function navigationReducer(state: AppState, action: NavigationAction): AppState {
@@ -101,7 +101,7 @@ function navigationReducer(state: AppState, action: NavigationAction): AppState 
     case 'RESET':
       return initialState;
     case 'START_QR_FLOW':
-      return { ...initialState, screen: 'game-intro', currentScreen: 'game-intro', isQrFlow: true, qrSource: action.source };
+      return { ...initialState, screen: 'game-intro', currentScreen: 'game-intro', isQrFlow: true, campaignId: action.campaignId ?? null };
     default:
       return state;
   }

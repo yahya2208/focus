@@ -38,17 +38,23 @@ export function CampaignsDashboard() {
     try {
       const client = getSupabaseClient();
       const ds = getDataService(client);
-      const [campaignsResult, qrResult] = await Promise.all([
+      const [campaignsResult, qrResult, sessionsResult] = await Promise.all([
         ds.getCampaigns({ limit: 100 }),
         ds.getQRCodes({ limit: 500 }),
+        client.from('sessions').select('campaign_id, status').not('campaign_id', 'is', null),
       ]);
+      const sessionList = sessionsResult.data ?? [];
       const rows: CampaignRow[] = campaignsResult.data.map(c => {
         const cQrs = qrResult.data.filter(qr => qr.campaign_id === c.id);
+        const cSessions = sessionList.filter(s => s.campaign_id === c.id);
+        const scanCount = cQrs.reduce((s, q) => s + q.scan_count, 0);
+        const completeCount = cQrs.reduce((s, q) => s + q.game_complete_count, 0);
+        const regCount = cSessions.filter(s => s.status === 'completed').length;
         return {
           ...c,
-          scan_count: cQrs.reduce((s, q) => s + q.scan_count, 0),
-          game_complete_count: cQrs.reduce((s, q) => s + q.game_complete_count, 0),
-          registration_count: cQrs.reduce((s, q) => s + q.registration_count, 0),
+          scan_count: scanCount,
+          game_complete_count: completeCount,
+          registration_count: regCount,
           qr_count: cQrs.length,
         };
       });

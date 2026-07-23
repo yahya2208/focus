@@ -138,7 +138,7 @@ function GlassLamp({ visible, xPct, yPct, onRef }: { visible: boolean; xPct: num
 
 export function GameScreen() {
   const dispatch = useAppDispatch();
-  const { calibrationProfile, isQrFlow, qrSource } = useAppState();
+  const { calibrationProfile, isQrFlow, campaignId } = useAppState();
   const { t } = useTranslation();
   const colors = useThemeColors();
 
@@ -188,7 +188,7 @@ export function GameScreen() {
           return corrected >= REACTION.MIN_RT_MS;
         }).length,
         isQrFlow,
-        campaignId: qrSource,
+        campaign_id: campaignId,
       });
       dispatch({
         type: 'SET_RESULTS',
